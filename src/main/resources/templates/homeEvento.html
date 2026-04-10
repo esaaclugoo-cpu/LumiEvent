@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Evento - Cliente</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a th:href="@{/cliente/home}" class="btn btn-link px-0">&larr; Volver al home</a>
+        <a th:href="@{/cliente/carrito}" class="btn btn-success" th:text="'Carrito (' + ${carritoCantidad} + ')'">Carrito</a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-6">
+            <div class="card shadow-sm h-100">
+                <img th:if="${evento.ruta_imagen != null and !#strings.isEmpty(evento.ruta_imagen)}"
+                     th:src="@{/uploads/{img}(img=${evento.ruta_imagen})}"
+                     class="card-img-top"
+                     alt="Imagen evento"
+                     style="height: 280px; object-fit: cover;">
+                <div class="card-body">
+                    <h2 class="h4" th:text="${evento.nombre}"></h2>
+                    <p class="text-muted" th:text="${evento.descripcion}"></p>
+                    <p class="mb-1"><strong>Fecha:</strong> <span th:text="${evento.fecha}"></span></p>
+                    <p class="mb-1"><strong>Aforo:</strong> <span th:text="${evento.aforo_maximo}"></span></p>
+                    <p class="mb-1"><strong>Vendidos:</strong> <span th:text="${vendidos}"></span></p>
+                    <p class="mb-0"><strong>Disponibles:</strong> <span th:text="${disponibles}"></span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">Anadir al carrito</h3>
+                    <div th:if="${errorMensaje}" class="alert alert-danger" th:text="${errorMensaje}"></div>
+
+                    <form th:action="@{/cliente/evento/{id}/agregar-carrito(id=${evento.id})}" th:object="${compraEntrada}" method="post">
+                        <div class="mb-3">
+                            <label for="tipo" class="form-label">Tipo de ticket</label>
+                            <select id="tipo" class="form-select" th:field="*{tipo}" required>
+                                <option value="general"
+                                        th:text="${'General (' + disponiblesPorTipo['general'] + ' disp.) - ' + #numbers.formatDecimal(precios['general'],1,2) + ' EUR'}"
+                                        th:disabled="${disponiblesPorTipo['general'] <= 0}"></option>
+                                <option value="vip"
+                                        th:text="${'VIP (' + disponiblesPorTipo['vip'] + ' disp.) - ' + #numbers.formatDecimal(precios['vip'],1,2) + ' EUR'}"
+                                        th:disabled="${disponiblesPorTipo['vip'] <= 0}"></option>
+                                <option value="premium"
+                                        th:text="${'Premium (' + disponiblesPorTipo['premium'] + ' disp.) - ' + #numbers.formatDecimal(precios['premium'],1,2) + ' EUR'}"
+                                        th:disabled="${disponiblesPorTipo['premium'] <= 0}"></option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="cantidad" class="form-label">Cantidad</label>
+                            <input id="cantidad" type="number" class="form-control" th:field="*{cantidad}" min="1" required>
+                            <small class="text-muted">Maximo para este tipo: <span id="maximoTipo" th:text="${disponiblesPorTipo['general']}"></span></small>
+                        </div>
+
+                        <div class="mb-3 p-3 border rounded">
+                            <p class="mb-1"><strong>Total estimado:</strong></p>
+                            <p class="mb-0 fs-5"><span id="totalEstimado">0.00</span> EUR</p>
+                        </div>
+
+                        <button id="btnAnadirCarrito" type="submit" class="btn btn-primary w-100" th:disabled="${disponibles <= 0}">Anadir al carrito</button>
+                        <p id="sinDisponibilidad" class="text-danger mt-2 mb-0 d-none">No quedan tickets para este tipo en este evento.</p>
+
+                        <div th:if="${okMensaje}" class="alert alert-success mt-3 mb-2" th:text="${okMensaje}"></div>
+                        <div th:if="${okMensaje}" class="d-grid gap-2 d-md-flex">
+                            <a th:href="@{/cliente/carrito}" class="btn btn-success">Proceder al pago</a>
+                            <a th:href="@{/cliente/home}" class="btn btn-outline-primary">Seguir comprando</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    (function () {
+        const tipo = document.getElementById('tipo');
+        const cantidad = document.getElementById('cantidad');
+        const total = document.getElementById('totalEstimado');
+        const maximoTipo = document.getElementById('maximoTipo');
+        const boton = document.getElementById('btnAnadirCarrito');
+        const sinDisponibilidad = document.getElementById('sinDisponibilidad');
+
+        const disponiblesPorTipo = /*[[${disponiblesPorTipo}]]*/ {};
+
+        const precios = {
+            general: 25.00,
+            vip: 50.00,
+            premium: 80.00
+        };
+
+        function obtenerDisponiblesTipo() {
+            const clave = (tipo.value || '').toLowerCase();
+            return parseInt((disponiblesPorTipo[clave] ?? 0), 10) || 0;
+        }
+
+        function actualizarDisponibilidad() {
+            const disponibles = obtenerDisponiblesTipo();
+            maximoTipo.textContent = String(disponibles);
+            cantidad.max = String(Math.max(disponibles, 1));
+
+            if (disponibles <= 0) {
+                boton.disabled = true;
+                sinDisponibilidad.classList.remove('d-none');
+            } else {
+                boton.disabled = false;
+                sinDisponibilidad.classList.add('d-none');
+                if (parseInt(cantidad.value || '1', 10) > disponibles) {
+                    cantidad.value = String(disponibles);
+                }
+            }
+        }
+
+        function calcular() {
+            const clave = (tipo.value || '').toLowerCase();
+            const precio = precios[clave] || 0;
+            const cant = parseInt(cantidad.value || '0', 10);
+            const totalValor = (precio * Math.max(cant, 0)).toFixed(2);
+            total.textContent = totalValor;
+        }
+
+        tipo.addEventListener('change', function () {
+            actualizarDisponibilidad();
+            calcular();
+        });
+        cantidad.addEventListener('input', calcular);
+        actualizarDisponibilidad();
+        calcular();
+    })();
+</script>
+</body>
+</html>

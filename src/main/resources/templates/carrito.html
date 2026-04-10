@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Carrito - Cliente</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h4 mb-0">Tu carrito</h1>
+        <a th:href="@{/cliente/home}" class="btn btn-outline-primary">Seguir comprando</a>
+    </div>
+
+    <div th:if="${okMensaje}" class="alert alert-success" th:text="${okMensaje}"></div>
+    <div th:if="${errorMensaje}" class="alert alert-danger" th:text="${errorMensaje}"></div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-striped mb-0">
+                <thead>
+                <tr>
+                    <th>Evento</th>
+                    <th>Tipo</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unitario</th>
+                    <th>Subtotal</th>
+                    <th>Accion</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(carrito)}">
+                    <td colspan="6" class="text-center py-4">No tienes items en el carrito.</td>
+                </tr>
+                <tr th:each="item, iter : ${carrito}">
+                    <td th:text="${item.nombreEvento}"></td>
+                    <td th:text="${item.tipo}"></td>
+                    <td th:text="${item.cantidad}"></td>
+                    <td><span th:text="${#numbers.formatDecimal(item.precioUnitario,1,2)}"></span> EUR</td>
+                    <td><span th:text="${#numbers.formatDecimal(item.subtotal,1,2)}"></span> EUR</td>
+                    <td>
+                        <form th:action="@{/cliente/carrito/eliminar}" method="post" class="d-inline">
+                            <input type="hidden" name="index" th:value="${iter.index}" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Quitar</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end align-items-center gap-3 mt-3">
+        <h4 class="mb-0">Total: <span th:text="${#numbers.formatDecimal(total,1,2)}"></span> EUR</h4>
+        <form th:action="@{/cliente/carrito/pagar}" method="post">
+            <button type="submit" class="btn btn-success" th:disabled="${#lists.isEmpty(carrito)}">Pagar carrito</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>
