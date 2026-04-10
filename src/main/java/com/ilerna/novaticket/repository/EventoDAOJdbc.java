@@ -25,16 +25,6 @@ public class EventoDAOJdbc implements EventoDAO{
             return;
         }
 
-        // Si es evento nuevo, calculamos el siguiente id_lugar disponible
-        if (evento.getId_lugar() == 0) {
-            try (PreparedStatement ps = conn.prepareStatement("SELECT COALESCE(MAX(id_lugar), 0) + 1 FROM evento");
-                 ResultSet rsLugar = ps.executeQuery()) {
-                if (rsLugar.next()) evento.setId_lugar(rsLugar.getInt(1));
-            } catch (SQLException e) {
-                evento.setId_lugar(1);
-            }
-        }
-
         String sql = "INSERT INTO evento (nombre, descripcion, fecha, aforo_maximo, tipo_evento, id_lugar, nombre_lugar, direccion, ciudad, ruta_imagen) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, evento.getNombre());
@@ -84,7 +74,7 @@ public class EventoDAOJdbc implements EventoDAO{
                                 pstmtM.setInt(1, id);
                                 pstmtM.setString(2, m.getNombre_exposicion());
                                 pstmtM.setString(3, m.getTipo_exposicion());
-                                pstmtM.setDate(4, Date.valueOf(m.getFecha_fin()));
+                                pstmtM.setDate(4, m.getFecha_fin() != null ? Date.valueOf(m.getFecha_fin()) : null);
                                 pstmtM.executeUpdate();
                             }
                             break;
@@ -205,7 +195,8 @@ public class EventoDAOJdbc implements EventoDAO{
     @Override
     public Evento obtenerPorId(int id) {
         Evento evento = null;
-        String sql = "SELECT * FROM evento WHERE id = ?";
+        String sql = "SELECT e.*, l.nombre AS nombre_lugar_fk, l.direccion AS direccion_fk, l.ciudad AS ciudad_fk " +
+                "FROM evento e INNER JOIN lugar l ON e.id_lugar = l.id WHERE e.id = ?";
 
         Connection conn = getConnection();
         if (conn == null) {
@@ -290,8 +281,9 @@ public class EventoDAOJdbc implements EventoDAO{
     @Override
     public List<Evento> listarTodos() {;
         List<Evento> eventos = new ArrayList<>();
-        String sql = "SELECT * FROM evento";
-        
+        String sql = "SELECT e.*, l.nombre AS nombre_lugar_fk, l.direccion AS direccion_fk, l.ciudad AS ciudad_fk " +
+                "FROM evento e INNER JOIN lugar l ON e.id_lugar = l.id";
+
         Connection conn = getConnection();
         if (conn == null) {
             System.err.println("❌ No se pudo obtener conexión a la base de datos.");
@@ -322,9 +314,9 @@ public class EventoDAOJdbc implements EventoDAO{
         LocalDate fecha = rs.getDate("fecha").toLocalDate();
         int aforo_maximo = rs.getInt("aforo_maximo");
         int id_lugar = rs.getInt("id_lugar");
-        String nombre_lugar = rs.getString("nombre_lugar");
-        String direccion = rs.getString("direccion");
-        String ciudad = rs.getString("ciudad");
+        String nombre_lugar = rs.getString("nombre_lugar_fk") != null ? rs.getString("nombre_lugar_fk") : rs.getString("nombre_lugar");
+        String direccion = rs.getString("direccion_fk") != null ? rs.getString("direccion_fk") : rs.getString("direccion");
+        String ciudad = rs.getString("ciudad_fk") != null ? rs.getString("ciudad_fk") : rs.getString("ciudad");
         String ruta_imagen = rs.getString("ruta_imagen");
         EventoEnum tipo = EventoEnum.valueOf(rs.getString("tipo_evento"));
 

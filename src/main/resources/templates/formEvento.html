@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Formulario Evento</title>
@@ -8,9 +8,10 @@
 <body>
 <div class="container mt-4">
     <h2 th:text="${evento.id == 0} ? 'Agregar Evento' : 'Editar Evento'"></h2>
-    <form th:action="${evento.id == 0} ? @{/eventos/guardar} : @{/eventos/actualizar}" th:object="${evento}" method="post">
+    <div th:if="${errorMensaje}" class="alert alert-danger" th:text="${errorMensaje}"></div>
+    <form th:action="@{/eventos/{accion}(accion=${evento.id == 0 ? 'guardar' : 'actualizar'})}" th:object="${evento}" method="post" enctype="multipart/form-data">
         <input type="hidden" th:field="*{id}" />
-        <input type="hidden" th:field="*{id_lugar}" />
+        <input type="hidden" th:field="*{ruta_imagen}" />
 
         <div class="mb-3">
             <label for="nombre" class="form-label">Nombre</label>
@@ -32,6 +33,27 @@
             <input type="number" class="form-control" id="aforoMaximo" th:field="*{aforo_maximo}" required />
         </div>
 
+        <div class="mb-3 p-3 border rounded bg-light">
+            <h5 class="mb-3">Cuota de Tickets por Tipo</h5>
+            <p class="text-muted small">Define cuántos tickets de cada tipo estarán disponibles para este evento.</p>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <label for="cuotaGeneral" class="form-label">General</label>
+                    <input type="number" class="form-control" id="cuotaGeneral" name="cuotaGeneral" min="0" value="0" />
+                </div>
+                <div class="col-md-4">
+                    <label for="cuotaVip" class="form-label">VIP</label>
+                    <input type="number" class="form-control" id="cuotaVip" name="cuotaVip" min="0" value="0" />
+                </div>
+                <div class="col-md-4">
+                    <label for="cuotaPremium" class="form-label">Premium</label>
+                    <input type="number" class="form-control" id="cuotaPremium" name="cuotaPremium" min="0" value="0" />
+                </div>
+            </div>
+            <small class="text-muted mt-2 d-block">La suma no debe exceder el aforo máximo (sugerencia).</small>
+        </div>
+
         <div class="mb-3">
             <label for="tipoEvento" class="form-label">Tipo Evento</label>
             <select class="form-select" id="tipoEvento" th:field="*{tipo_evento}" required>
@@ -42,57 +64,61 @@
         </div>
 
         <div class="mb-3">
-            <label for="nombreLugar" class="form-label">Nombre Lugar</label>
-            <input type="text" class="form-control" id="nombreLugar" th:field="*{nombre_lugar}" required />
+            <label for="idLugar" class="form-label">Lugar</label>
+            <select class="form-select" id="idLugar" th:field="*{id_lugar}" required>
+                <option value="0" disabled th:selected="*{id_lugar == 0}">Selecciona un lugar</option>
+                <option th:each="lugar : ${lugares}"
+                        th:value="${lugar.id}"
+                        th:text="${lugar.nombre + ' - ' + lugar.ciudad}">
+                </option>
+            </select>
         </div>
 
         <div class="mb-3">
-            <label for="direccion" class="form-label">Dirección</label>
-            <input type="text" class="form-control" id="direccion" th:field="*{direccion}" required />
+            <label for="imagenFile" class="form-label">Imagen del evento</label>
+            <input type="file" class="form-control" id="imagenFile" name="imagenFile" accept="image/*" />
+            <small class="text-muted">Si no subes una nueva imagen, se conserva la actual.</small>
         </div>
 
-        <div class="mb-3">
-            <label for="ciudad" class="form-label">Ciudad</label>
-            <input type="text" class="form-control" id="ciudad" th:field="*{ciudad}" required />
-        </div>
-
-        <div class="mb-3">
-            <label for="rutaImagen" class="form-label">Ruta Imagen</label>
-            <input type="text" class="form-control" id="rutaImagen" th:field="*{ruta_imagen}" />
+        <div class="mb-3" th:if="${evento.ruta_imagen != null and !#strings.isEmpty(evento.ruta_imagen)}">
+            <label class="form-label">Imagen actual</label>
+            <div>
+                <img th:src="@{/uploads/{img}(img=${evento.ruta_imagen})}" alt="Imagen actual del evento" style="max-width: 220px; border-radius: 8px;" />
+            </div>
         </div>
 
         <!-- Campos específicos de subclases -->
         <div class="mb-3 tipo-specific" id="concierto-fields" style="display:none;">
             <h5>Campos para Concierto</h5>
-            <label class="form-label">Artista Principal</label>
-            <input type="text" class="form-control" th:field="*{artista_principal}" />
+            <label for="artistaPrincipal" class="form-label">Artista Principal</label>
+            <input type="text" class="form-control" id="artistaPrincipal" th:field="*{artista_principal}" />
 
-            <label class="form-label">Género Musical</label>
-            <input type="text" class="form-control" th:field="*{genero_musical}" />
+            <label for="generoMusical" class="form-label">Género Musical</label>
+            <input type="text" class="form-control" id="generoMusical" th:field="*{genero_musical}" />
 
-            <label class="form-label">Duración (minutos)</label>
-            <input type="number" class="form-control" th:field="*{duracion_minutos}" />
+            <label for="duracionMinutos" class="form-label">Duración (minutos)</label>
+            <input type="number" class="form-control" id="duracionMinutos" th:field="*{duracion_minutos}" />
         </div>
 
         <div class="mb-3 tipo-specific" id="teatro-fields" style="display:none;">
             <h5>Campos para Teatro</h5>
-            <label class="form-label">Obra</label>
-            <input type="text" class="form-control" th:field="*{obra}" />
+            <label for="obra" class="form-label">Obra</label>
+            <input type="text" class="form-control" id="obra" th:field="*{obra}" />
 
-            <label class="form-label">Director</label>
-            <input type="text" class="form-control" th:field="*{director}" />
+            <label for="director" class="form-label">Director</label>
+            <input type="text" class="form-control" id="director" th:field="*{director}" />
         </div>
 
         <div class="mb-3 tipo-specific" id="museo-fields" style="display:none;">
             <h5>Campos para Museo</h5>
-            <label class="form-label">Nombre Exposición</label>
-            <input type="text" class="form-control" th:field="*{nombre_exposicion}" />
+            <label for="nombreExposicion" class="form-label">Nombre Exposición</label>
+            <input type="text" class="form-control" id="nombreExposicion" th:field="*{nombre_exposicion}" />
 
-            <label class="form-label">Tipo Exposición</label>
-            <input type="text" class="form-control" th:field="*{tipo_exposicion}" />
+            <label for="tipoExposicion" class="form-label">Tipo Exposición</label>
+            <input type="text" class="form-control" id="tipoExposicion" th:field="*{tipo_exposicion}" />
 
-            <label class="form-label">Fecha Fin</label>
-            <input type="date" class="form-control" th:field="*{fecha_fin}" />
+            <label for="fechaFin" class="form-label">Fecha Fin</label>
+            <input type="date" class="form-control" id="fechaFin" th:field="*{fecha_fin}" />
         </div>
 
         <button type="submit" class="btn btn-primary">Guardar</button>

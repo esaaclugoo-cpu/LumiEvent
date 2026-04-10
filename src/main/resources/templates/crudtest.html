@@ -25,7 +25,13 @@
         </thead>
         <tbody>
         <tr th:each="evento : ${eventos}">
-            <td><img th:src="@{/images/{img}(img=${evento.ruta_imagen})}" width="80" alt="Imagen del evento"></td>
+            <td>
+                <img th:if="${evento.ruta_imagen != null and !#strings.isEmpty(evento.ruta_imagen)}"
+                     th:src="@{/uploads/{img}(img=${evento.ruta_imagen})}"
+                     width="80"
+                     alt="Imagen del evento">
+                <span th:unless="${evento.ruta_imagen != null and !#strings.isEmpty(evento.ruta_imagen)}">Sin imagen</span>
+            </td>
             <td th:text="${evento.id}"></td>
             <td th:text="${evento.tipo_evento}"></td>
             <td th:text="${evento.nombre}"></td>

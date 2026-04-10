@@ -1,18 +1,18 @@
 package com.ilerna.novaticket.model;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class Compra {
 
     private int id, id_usuario;
-    private LocalDate fecha;
+    private LocalDateTime fecha;
     private BigDecimal total;
 
     public Compra() {
     }
 
-    public Compra(int id, int id_usuario, LocalDate fecha, BigDecimal total) {
+    public Compra(int id, int id_usuario, LocalDateTime fecha, BigDecimal total) {
         this.id = id;
         this.id_usuario = id_usuario;
         this.fecha = fecha;
@@ -35,11 +35,11 @@ public class Compra {
         this.id_usuario = id_usuario;
     }
 
-    public LocalDate getFecha() {
+    public LocalDateTime getFecha() {
         return fecha;
     }
 
-    public void setFecha(LocalDate fecha) {
+    public void setFecha(LocalDateTime fecha) {
         this.fecha = fecha;
     }
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Formulario Asiento</title>
@@ -7,7 +7,7 @@
 </head>
 <body>
 <div class="container mt-4">
-    <h2 th:text="${asiento.id == 0} ? 'Agregar Asiento' : 'Editar Asiento'"></h2>
+    <h2 th:text="${asiento.id == 0} ? 'Agregar Asiento' : 'Editarrear Asiento'"></h2>
 
     <form th:action="@{/asientos/guardar}" th:object="${asiento}" method="post">
         <input type="hidden" th:field="*{id}" />

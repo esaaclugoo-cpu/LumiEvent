@@ -15,13 +15,16 @@
         <input type="hidden" th:field="*{id}" />
 
         <div class="mb-3">
-            <label for="idUsuario" class="form-label">ID Usuario</label>
-            <input type="number" class="form-control" id="idUsuario" th:field="*{id_usuario}" min="1" required />
+            <label for="idUsuario" class="form-label">Usuario</label>
+            <select class="form-select" id="idUsuario" th:field="*{id_usuario}" required>
+                <option value="0" disabled th:selected="*{id_usuario == 0}">Selecciona un usuario</option>
+                <option th:each="usuario : ${usuarios}" th:value="${usuario.id}" th:text="${usuario.nombre + ' (' + usuario.email + ')'}"></option>
+            </select>
         </div>
 
         <div class="mb-3">
-            <label for="fecha" class="form-label">Fecha</label>
-            <input type="date" class="form-control" id="fecha" th:field="*{fecha}" min="1900-01-01" max="9999-12-31" required />
+            <label for="fecha" class="form-label">Fecha y hora</label>
+            <input type="datetime-local" class="form-control" id="fecha" th:field="*{fecha}" required />
             <div class="text-danger" th:if="${#fields.hasErrors('fecha')}" th:errors="*{fecha}"></div>
         </div>
 

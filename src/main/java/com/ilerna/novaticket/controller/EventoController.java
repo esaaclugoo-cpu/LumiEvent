@@ -1,7 +1,13 @@
 package com.ilerna.novaticket.controller;
 
-import com.ilerna.novaticket.model.*;
+import com.ilerna.novaticket.model.Concierto;
+import com.ilerna.novaticket.model.Evento;
+import com.ilerna.novaticket.model.EventoForm;
+import com.ilerna.novaticket.model.Lugar;
+import com.ilerna.novaticket.model.Museo;
+import com.ilerna.novaticket.model.Teatro;
 import com.ilerna.novaticket.service.EventoService;
+import com.ilerna.novaticket.service.LugarService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -9,77 +15,78 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+import jakarta.servlet.http.HttpSession;
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 public class EventoController {
 
     private final EventoService eventoService;
+    private final LugarService lugarService;
 
     @Autowired
-    public EventoController(EventoService eventoService) {
+    public EventoController(EventoService eventoService, LugarService lugarService) {
         this.eventoService = eventoService;
+        this.lugarService = lugarService;
     }
 
-    @GetMapping("/index")
-    public String mostrarIndex() {
-        return "index";
+    @GetMapping("/admin")
+    public String mostrarAdmin() {
+        return "admin";
     }
 
-    // Listar todos los eventos para "/" y "/eventos"
     @GetMapping({"/", "/eventos"})
     public String listarEvento(Model model) {
         model.addAttribute("eventos", eventoService.listarTodosLosEventos());
         return "crudtest";
     }
 
-
-
-
-    // Mostrar formulario para agregar un nuevo evento
     @GetMapping("/eventos/nuevo")
     public String mostrarFormulario(Model model) {
         model.addAttribute("evento", new EventoForm());
+        model.addAttribute("lugares", lugarService.listarTodosLosLugares());
         return "formEvento";
     }
 
     @PostMapping("/eventos/guardar")
-    public String guardarEvento(@ModelAttribute EventoForm eventoForm) {
-        Evento evento = null;
-        switch (eventoForm.getTipo_evento()) {
-            case concierto:
-                Concierto c = new Concierto();
-                c.setArtista_principal(eventoForm.getArtista_principal());
-                c.setGenero_musical(eventoForm.getGenero_musical());
-                c.setDuracion_minutos(eventoForm.getDuracion_minutos());
-                evento = c;
-                break;
-            case teatro:
-                Teatro t = new Teatro();
-                t.setObra(eventoForm.getObra());
-                t.setDirector(eventoForm.getDirector());
-                evento = t;
-                break;
-            case museo:
-                Museo m = new Museo();
-                m.setNombre_exposicion(eventoForm.getNombre_exposicion());
-                m.setTipo_exposicion(eventoForm.getTipo_exposicion());
-                m.setFecha_fin(eventoForm.getFecha_fin());
-                evento = m;
-                break;
+    public String guardarEvento(@ModelAttribute EventoForm eventoForm,
+                                @RequestParam(value = "imagenFile", required = false) MultipartFile imagenFile,
+                                @RequestParam(value = "cuotaGeneral", defaultValue = "0") int cuotaGeneral,
+                                @RequestParam(value = "cuotaVip", defaultValue = "0") int cuotaVip,
+                                @RequestParam(value = "cuotaPremium", defaultValue = "0") int cuotaPremium,
+                                HttpSession session,
+                                Model model) {
+        try {
+            eventoForm.setRuta_imagen(eventoService.guardarImagen(imagenFile, eventoForm.getRuta_imagen()));
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("evento", eventoForm);
+            model.addAttribute("lugares", lugarService.listarTodosLosLugares());
+            model.addAttribute("errorMensaje", e.getMessage());
+            return "formEvento";
+        } catch (RuntimeException e) {
+            model.addAttribute("evento", eventoForm);
+            model.addAttribute("lugares", lugarService.listarTodosLosLugares());
+            model.addAttribute("errorMensaje", "No se pudo subir la imagen del evento.");
+            return "formEvento";
         }
-        if (evento != null) {
-            evento.setTipo_evento(eventoForm.getTipo_evento());
-            evento.setNombre(eventoForm.getNombre());
-            evento.setDescripcion(eventoForm.getDescripcion());
-            evento.setFecha(eventoForm.getFecha());
-            evento.setAforo_maximo(eventoForm.getAforo_maximo());
-            evento.setId_lugar(eventoForm.getId_lugar());
-            evento.setNombre_lugar(eventoForm.getNombre_lugar());
-            evento.setDireccion(eventoForm.getDireccion());
-            evento.setCiudad(eventoForm.getCiudad());
-            evento.setRuta_imagen(eventoForm.getRuta_imagen());
-            eventoService.guardarEvento(evento);
+
+        Evento evento = construirEventoDesdeFormulario(eventoForm);
+        if (evento == null) {
+            model.addAttribute("evento", eventoForm);
+            model.addAttribute("lugares", lugarService.listarTodosLosLugares());
+            model.addAttribute("errorMensaje", "Debes seleccionar un tipo de evento valido.");
+            return "formEvento";
         }
+
+        if (!aplicarLugarSeleccionado(eventoForm.getId_lugar(), evento, model, eventoForm)) {
+            return "formEvento";
+        }
+
+        eventoService.guardarEvento(evento);
+        guardarCuotasTickets(evento.getId(), cuotaGeneral, cuotaVip, cuotaPremium, session);
         return "redirect:/eventos";
     }
 
@@ -120,48 +127,52 @@ public class EventoController {
         }
 
         model.addAttribute("evento", form);
+        model.addAttribute("lugares", lugarService.listarTodosLosLugares());
         return "formEvento";
     }
 
     @PostMapping("/eventos/actualizar")
-    public String actualizarEvento(@ModelAttribute EventoForm eventoForm) {
-        Evento evento = null;
-        switch (eventoForm.getTipo_evento()) {
-            case concierto:
-                Concierto c = new Concierto();
-                c.setArtista_principal(eventoForm.getArtista_principal());
-                c.setGenero_musical(eventoForm.getGenero_musical());
-                c.setDuracion_minutos(eventoForm.getDuracion_minutos());
-                evento = c;
-                break;
-            case teatro:
-                Teatro t = new Teatro();
-                t.setObra(eventoForm.getObra());
-                t.setDirector(eventoForm.getDirector());
-                evento = t;
-                break;
-            case museo:
-                Museo m = new Museo();
-                m.setNombre_exposicion(eventoForm.getNombre_exposicion());
-                m.setTipo_exposicion(eventoForm.getTipo_exposicion());
-                m.setFecha_fin(eventoForm.getFecha_fin());
-                evento = m;
-                break;
+    public String actualizarEvento(@ModelAttribute EventoForm eventoForm,
+                                   @RequestParam(value = "imagenFile", required = false) MultipartFile imagenFile,
+                                   @RequestParam(value = "cuotaGeneral", defaultValue = "0") int cuotaGeneral,
+                                   @RequestParam(value = "cuotaVip", defaultValue = "0") int cuotaVip,
+                                   @RequestParam(value = "cuotaPremium", defaultValue = "0") int cuotaPremium,
+                                   HttpSession session,
+                                   Model model) {
+        Evento eventoActual = eventoService.obtenerEventoPorId(eventoForm.getId());
+        if (eventoActual == null) {
+            return "redirect:/eventos";
         }
-        if (evento != null) {
-            evento.setId(eventoForm.getId());
-            evento.setTipo_evento(eventoForm.getTipo_evento());
-            evento.setNombre(eventoForm.getNombre());
-            evento.setDescripcion(eventoForm.getDescripcion());
-            evento.setFecha(eventoForm.getFecha());
-            evento.setAforo_maximo(eventoForm.getAforo_maximo());
-            evento.setId_lugar(eventoForm.getId_lugar());
-            evento.setNombre_lugar(eventoForm.getNombre_lugar());
-            evento.setDireccion(eventoForm.getDireccion());
-            evento.setCiudad(eventoForm.getCiudad());
-            evento.setRuta_imagen(eventoForm.getRuta_imagen());
-            eventoService.actualizarEvento(evento);
+
+        try {
+            eventoForm.setRuta_imagen(eventoService.guardarImagen(imagenFile, eventoActual.getRuta_imagen()));
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("evento", eventoForm);
+            model.addAttribute("lugares", lugarService.listarTodosLosLugares());
+            model.addAttribute("errorMensaje", e.getMessage());
+            return "formEvento";
+        } catch (RuntimeException e) {
+            model.addAttribute("evento", eventoForm);
+            model.addAttribute("lugares", lugarService.listarTodosLosLugares());
+            model.addAttribute("errorMensaje", "No se pudo actualizar la imagen del evento.");
+            return "formEvento";
         }
+
+        Evento evento = construirEventoDesdeFormulario(eventoForm);
+        if (evento == null) {
+            model.addAttribute("evento", eventoForm);
+            model.addAttribute("lugares", lugarService.listarTodosLosLugares());
+            model.addAttribute("errorMensaje", "Debes seleccionar un tipo de evento valido.");
+            return "formEvento";
+        }
+
+        evento.setId(eventoForm.getId());
+        if (!aplicarLugarSeleccionado(eventoForm.getId_lugar(), evento, model, eventoForm)) {
+            return "formEvento";
+        }
+
+        eventoService.actualizarEvento(evento);
+        guardarCuotasTickets(evento.getId(), cuotaGeneral, cuotaVip, cuotaPremium, session);
         return "redirect:/eventos";
     }
 
@@ -169,5 +180,91 @@ public class EventoController {
     public String eliminarEvento(@PathVariable int id) {
         eventoService.eliminarEvento(id);
         return "redirect:/eventos";
+    }
+
+    private Evento construirEventoDesdeFormulario(EventoForm eventoForm) {
+        Evento evento = null;
+
+        if (eventoForm.getTipo_evento() == null) {
+            return null;
+        }
+
+        switch (eventoForm.getTipo_evento()) {
+            case concierto:
+                Concierto concierto = new Concierto();
+                concierto.setArtista_principal(eventoForm.getArtista_principal());
+                concierto.setGenero_musical(eventoForm.getGenero_musical());
+                concierto.setDuracion_minutos(eventoForm.getDuracion_minutos());
+                evento = concierto;
+                break;
+            case teatro:
+                Teatro teatro = new Teatro();
+                teatro.setObra(eventoForm.getObra());
+                teatro.setDirector(eventoForm.getDirector());
+                evento = teatro;
+                break;
+            case museo:
+                Museo museo = new Museo();
+                museo.setNombre_exposicion(eventoForm.getNombre_exposicion());
+                museo.setTipo_exposicion(eventoForm.getTipo_exposicion());
+                museo.setFecha_fin(eventoForm.getFecha_fin());
+                evento = museo;
+                break;
+            default:
+                return null;
+        }
+
+        evento.setTipo_evento(eventoForm.getTipo_evento());
+        evento.setNombre(eventoForm.getNombre());
+        evento.setDescripcion(eventoForm.getDescripcion());
+        evento.setFecha(eventoForm.getFecha());
+        evento.setAforo_maximo(eventoForm.getAforo_maximo());
+        evento.setRuta_imagen(eventoForm.getRuta_imagen());
+        return evento;
+    }
+
+    private boolean aplicarLugarSeleccionado(int idLugar, Evento evento, Model model, EventoForm eventoForm) {
+        Lugar lugar = lugarService.obtenerLugarPorId(idLugar);
+        if (lugar == null) {
+            model.addAttribute("evento", eventoForm);
+            model.addAttribute("lugares", lugarService.listarTodosLosLugares());
+            model.addAttribute("errorMensaje", "Debes seleccionar un lugar valido.");
+            return false;
+        }
+
+        evento.setId_lugar(lugar.getId());
+        evento.setNombre_lugar(lugar.getNombre());
+        evento.setDireccion(lugar.getDireccion());
+        evento.setCiudad(lugar.getCiudad());
+        return true;
+    }
+
+    private void guardarCuotasTickets(int idEvento, int cuotaGeneral, int cuotaVip, int cuotaPremium, HttpSession session) {
+        @SuppressWarnings("unchecked")
+        Map<Integer, Map<String, Integer>> cuotasPorEvento = (Map<Integer, Map<String, Integer>>) session.getAttribute("cuotasTicketsPorEvento");
+        if (cuotasPorEvento == null) {
+            cuotasPorEvento = new HashMap<>();
+        }
+
+        Map<String, Integer> cuotas = new HashMap<>();
+        cuotas.put("general", Math.max(cuotaGeneral, 0));
+        cuotas.put("vip", Math.max(cuotaVip, 0));
+        cuotas.put("premium", Math.max(cuotaPremium, 0));
+        cuotasPorEvento.put(idEvento, cuotas);
+
+        session.setAttribute("cuotasTicketsPorEvento", cuotasPorEvento);
+    }
+
+    public static Map<String, Integer> obtenerCuotasTickets(int idEvento, HttpSession session) {
+        @SuppressWarnings("unchecked")
+        Map<Integer, Map<String, Integer>> cuotasPorEvento = (Map<Integer, Map<String, Integer>>) session.getAttribute("cuotasTicketsPorEvento");
+        if (cuotasPorEvento == null || !cuotasPorEvento.containsKey(idEvento)) {
+            Map<String, Integer> defecto = new HashMap<>();
+            defecto.put("general", 0);
+            defecto.put("vip", 0);
+            defecto.put("premium", 0);
+            return defecto;
+        }
+        return cuotasPorEvento.get(idEvento);
     }
 }

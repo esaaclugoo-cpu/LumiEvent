@@ -1,5 +1,6 @@
 drop database if exists novaticket;
 create database novaticket;
+use novaticket;
 
 CREATE TABLE usuario (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -7,6 +8,13 @@ CREATE TABLE usuario (
     email VARCHAR(150) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     tipo_usuario ENUM('cliente','admin')
+);
+
+CREATE TABLE lugar (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    direccion VARCHAR(255) NOT NULL,
+    ciudad VARCHAR(100) NOT NULL
 );
 
 
@@ -22,7 +30,8 @@ CREATE TABLE evento (
     direccion VARCHAR(255) NOT NULL,
     ciudad VARCHAR(100) NOT NULL,
     ruta_imagen VARCHAR(255)
-    
+
+    ,FOREIGN KEY (id_lugar) REFERENCES lugar(id) ON DELETE CASCADE
 );
 
 CREATE TABLE concierto (
@@ -58,8 +67,8 @@ CREATE TABLE asiento (
     numero_asiento INT NOT NULL,
     zona VARCHAR(50) NOT NULL,
 
-    UNIQUE(id_lugar, fila, numero_asiento)
-    
+    UNIQUE(id_lugar, fila, numero_asiento),
+    FOREIGN KEY (id_lugar) REFERENCES lugar(id)
 );
 
 
@@ -80,12 +89,11 @@ CREATE TABLE ticket (
     id_evento INT NOT NULL,
     id_asiento INT,
     tipo VARCHAR(50) NOT NULL,
-    precio DECIMAL(10,2) NOT NULL,
     id_compra INT NOT NULL,
-    id_ticket INT NOT NULL,
     cantidad INT NOT NULL,
     precio_unitario DECIMAL(10,2) NOT NULL,
-    
+
+    UNIQUE(id_evento, id_asiento),
     FOREIGN KEY (id_evento) REFERENCES evento(id),
     FOREIGN KEY (id_asiento) REFERENCES asiento(id),
     FOREIGN KEY (id_compra) REFERENCES compra(id) ON DELETE CASCADE
@@ -102,6 +110,12 @@ INSERT INTO usuario (nombre, email, password, tipo_usuario) VALUES
 ('Juan', 'juan@mail.com', '123', 'cliente'),
 ('Ana', 'ana@mail.com', '123', 'cliente'),
 ('Admin', 'admin@mail.com', 'admin', 'admin');
+
+
+INSERT INTO lugar (id, nombre, direccion, ciudad) VALUES
+(1, 'Arena', 'Calle 1', 'Madrid'),
+(2, 'Teatro Central', 'Calle 2', 'Madrid'),
+(3, 'Museo Nacional', 'Calle 3', 'Barcelona');
 
 
 
@@ -137,9 +151,9 @@ INSERT INTO compra (id_usuario, fecha, total) VALUES
 (2, '2026-03-02 12:00:00', 50.00);
 
 
-INSERT INTO ticket (id_evento, id_asiento, tipo, precio, id_compra, id_ticket, cantidad, precio_unitario) VALUES
-(1, 1, 'General', 50.00, 1, 1, 2, 25.00),
-(2, 2, 'VIP', 50.00, 2, 2, 1, 50.00);
+INSERT INTO ticket (id_evento, id_asiento, tipo, id_compra, cantidad, precio_unitario) VALUES
+(1, 1, 'General', 1, 2, 25.00),
+(2, 2, 'VIP', 2, 1, 50.00);
 
 
 

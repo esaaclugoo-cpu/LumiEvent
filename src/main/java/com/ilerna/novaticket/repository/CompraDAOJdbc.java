@@ -1,7 +1,6 @@
 package com.ilerna.novaticket.repository;
 
 import com.ilerna.novaticket.connection.Conexion;
-import com.ilerna.novaticket.model.Asiento;
 import com.ilerna.novaticket.model.Compra;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
@@ -31,7 +30,7 @@ public class CompraDAOJdbc implements CompraDAO{
         String sql = "INSERT INTO compra (id_usuario, fecha, total) VALUES (?, ?, ?)";
         try (PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setInt(1, compra.getId_usuario());
-            pstmt.setDate(2, Date.valueOf(compra.getFecha()));
+            pstmt.setTimestamp(2, Timestamp.valueOf(compra.getFecha()));
             pstmt.setBigDecimal(3, compra.getTotal());
 
             int rows = pstmt.executeUpdate();
@@ -62,7 +61,7 @@ public class CompraDAOJdbc implements CompraDAO{
         String sql = "UPDATE compra SET id_usuario = ?, fecha = ?, total = ? WHERE id = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, compra.getId_usuario());
-            pstmt.setDate(2, Date.valueOf(compra.getFecha()));
+            pstmt.setTimestamp(2, Timestamp.valueOf(compra.getFecha()));
             pstmt.setBigDecimal(3, compra.getTotal());
             pstmt.setInt(4, compra.getId());
 
@@ -161,8 +160,8 @@ public class CompraDAOJdbc implements CompraDAO{
         Compra compra = new Compra();
         compra.setId(rs.getInt("id"));
         compra.setId_usuario(rs.getInt("id_usuario"));
-        Date fechaSql = rs.getDate("fecha");
-        compra.setFecha(fechaSql != null ? fechaSql.toLocalDate() : null);
+        Timestamp fechaSql = rs.getTimestamp("fecha");
+        compra.setFecha(fechaSql != null ? fechaSql.toLocalDateTime() : null);
         compra.setTotal(rs.getBigDecimal("total"));
         return compra;
     }

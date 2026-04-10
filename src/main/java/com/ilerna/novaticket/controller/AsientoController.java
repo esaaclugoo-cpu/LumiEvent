@@ -1,9 +1,9 @@
 package com.ilerna.novaticket.controller;
 
 import com.ilerna.novaticket.model.Asiento;
-import com.ilerna.novaticket.model.Evento;
+import com.ilerna.novaticket.model.Lugar;
 import com.ilerna.novaticket.service.AsientoService;
-import com.ilerna.novaticket.service.EventoService;
+import com.ilerna.novaticket.service.LugarService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,17 +19,18 @@ import java.util.Map;
 public class AsientoController {
 
     private final AsientoService asientoService;
-    private final EventoService eventoService;
+    private final LugarService lugarService;
 
     @Autowired
-    public AsientoController(AsientoService asientoService, EventoService eventoService) {
+    public AsientoController(AsientoService asientoService, LugarService lugarService) {
         this.asientoService = asientoService;
-        this.eventoService = eventoService;
+        this.lugarService = lugarService;
     }
 
     @GetMapping("/asientos")
     public String listarAsientos(Model model) {
         model.addAttribute("asientos", asientoService.listarTodosLosAsientos());
+        model.addAttribute("lugares", obtenerLugaresRegistrados());
         return "crudAsiento";
     }
 
@@ -45,6 +46,7 @@ public class AsientoController {
         if (asiento.getId_lugar() <= 0) {
             return asiento.getId() > 0 ? "redirect:/asientos/editar/" + asiento.getId() : "redirect:/asientos/nuevo";
         }
+
         if (asiento.getId() > 0) {
             asientoService.actualizarAsiento(asiento);
         } else {
@@ -81,8 +83,8 @@ public class AsientoController {
 
     private Map<Integer, String> obtenerLugaresRegistrados() {
         Map<Integer, String> lugares = new LinkedHashMap<>();
-        for (Evento evento : eventoService.listarTodosLosEventos()) {
-            lugares.putIfAbsent(evento.getId_lugar(), evento.getNombre_lugar());
+        for (Lugar lugar : lugarService.listarTodosLosLugares()) {
+            lugares.put(lugar.getId(), lugar.getNombre());
         }
         return lugares;
     }

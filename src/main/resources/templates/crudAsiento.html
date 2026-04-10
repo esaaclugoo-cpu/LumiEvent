@@ -16,7 +16,7 @@
         <thead>
         <tr>
             <th>ID</th>
-            <th>ID Lugar</th>
+            <th>Lugar</th>
             <th>Fila</th>
             <th>Numero Asiento</th>
             <th>Zona</th>
@@ -29,7 +29,7 @@
         </tr>
         <tr th:each="asiento : ${asientos}">
             <td th:text="${asiento.id}"></td>
-            <td th:text="${asiento.id_lugar}"></td>
+            <td th:text="${lugares[asiento.id_lugar] != null ? lugares[asiento.id_lugar] : 'ID ' + asiento.id_lugar}"></td>
             <td th:text="${asiento.fila}"></td>
             <td th:text="${asiento.numero_asiento}"></td>
             <td th:text="${asiento.zona}"></td>

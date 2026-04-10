@@ -54,6 +54,45 @@
                 </div>
             </div>
         </div>
+
+        <div class="col-12 col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">Lugares</h5>
+                    <p class="card-text text-muted">Administra los lugares disponibles para eventos y asientos.</p>
+                    <div class="mt-auto d-grid gap-2">
+                        <a th:href="@{/lugares}" class="btn btn-info">Ver lugares</a>
+                        <a th:href="@{/lugares/nuevo}" class="btn btn-outline-info">Nuevo lugar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">Usuarios</h5>
+                    <p class="card-text text-muted">Gestiona clientes y administradores registrados.</p>
+                    <div class="mt-auto d-grid gap-2">
+                        <a th:href="@{/usuarios}" class="btn btn-dark">Ver usuarios</a>
+                        <a th:href="@{/usuarios/nuevo}" class="btn btn-outline-dark">Nuevo usuario</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">Tickets</h5>
+                    <p class="card-text text-muted">Registra tickets vinculados a evento, compra y asiento.</p>
+                    <div class="mt-auto d-grid gap-2">
+                        <a th:href="@{/tickets}" class="btn btn-secondary">Ver tickets</a>
+                        <a th:href="@{/tickets/nuevo}" class="btn btn-outline-secondary">Nuevo ticket</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
