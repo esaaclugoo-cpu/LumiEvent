@@ -17,9 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
-import jakarta.servlet.http.HttpSession;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.LocalDate;
 
 @Controller
 public class EventoController {
@@ -38,7 +36,7 @@ public class EventoController {
         return "admin";
     }
 
-    @GetMapping({"/", "/eventos"})
+    @GetMapping("/eventos")
     public String listarEvento(Model model) {
         model.addAttribute("eventos", eventoService.listarTodosLosEventos());
         return "crudtest";
@@ -54,11 +52,14 @@ public class EventoController {
     @PostMapping("/eventos/guardar")
     public String guardarEvento(@ModelAttribute EventoForm eventoForm,
                                 @RequestParam(value = "imagenFile", required = false) MultipartFile imagenFile,
-                                @RequestParam(value = "cuotaGeneral", defaultValue = "0") int cuotaGeneral,
-                                @RequestParam(value = "cuotaVip", defaultValue = "0") int cuotaVip,
-                                @RequestParam(value = "cuotaPremium", defaultValue = "0") int cuotaPremium,
-                                HttpSession session,
                                 Model model) {
+        if (eventoForm.getFecha() == null || eventoForm.getFecha().isBefore(LocalDate.now())) {
+            model.addAttribute("evento", eventoForm);
+            model.addAttribute("lugares", lugarService.listarTodosLosLugares());
+            model.addAttribute("errorMensaje", "La fecha del evento debe ser hoy o posterior.");
+            return "formEvento";
+        }
+
         try {
             eventoForm.setRuta_imagen(eventoService.guardarImagen(imagenFile, eventoForm.getRuta_imagen()));
         } catch (IllegalArgumentException e) {
@@ -86,7 +87,6 @@ public class EventoController {
         }
 
         eventoService.guardarEvento(evento);
-        guardarCuotasTickets(evento.getId(), cuotaGeneral, cuotaVip, cuotaPremium, session);
         return "redirect:/eventos";
     }
 
@@ -134,10 +134,6 @@ public class EventoController {
     @PostMapping("/eventos/actualizar")
     public String actualizarEvento(@ModelAttribute EventoForm eventoForm,
                                    @RequestParam(value = "imagenFile", required = false) MultipartFile imagenFile,
-                                   @RequestParam(value = "cuotaGeneral", defaultValue = "0") int cuotaGeneral,
-                                   @RequestParam(value = "cuotaVip", defaultValue = "0") int cuotaVip,
-                                   @RequestParam(value = "cuotaPremium", defaultValue = "0") int cuotaPremium,
-                                   HttpSession session,
                                    Model model) {
         Evento eventoActual = eventoService.obtenerEventoPorId(eventoForm.getId());
         if (eventoActual == null) {
@@ -172,7 +168,6 @@ public class EventoController {
         }
 
         eventoService.actualizarEvento(evento);
-        guardarCuotasTickets(evento.getId(), cuotaGeneral, cuotaVip, cuotaPremium, session);
         return "redirect:/eventos";
     }
 
@@ -239,32 +234,4 @@ public class EventoController {
         return true;
     }
 
-    private void guardarCuotasTickets(int idEvento, int cuotaGeneral, int cuotaVip, int cuotaPremium, HttpSession session) {
-        @SuppressWarnings("unchecked")
-        Map<Integer, Map<String, Integer>> cuotasPorEvento = (Map<Integer, Map<String, Integer>>) session.getAttribute("cuotasTicketsPorEvento");
-        if (cuotasPorEvento == null) {
-            cuotasPorEvento = new HashMap<>();
-        }
-
-        Map<String, Integer> cuotas = new HashMap<>();
-        cuotas.put("general", Math.max(cuotaGeneral, 0));
-        cuotas.put("vip", Math.max(cuotaVip, 0));
-        cuotas.put("premium", Math.max(cuotaPremium, 0));
-        cuotasPorEvento.put(idEvento, cuotas);
-
-        session.setAttribute("cuotasTicketsPorEvento", cuotasPorEvento);
-    }
-
-    public static Map<String, Integer> obtenerCuotasTickets(int idEvento, HttpSession session) {
-        @SuppressWarnings("unchecked")
-        Map<Integer, Map<String, Integer>> cuotasPorEvento = (Map<Integer, Map<String, Integer>>) session.getAttribute("cuotasTicketsPorEvento");
-        if (cuotasPorEvento == null || !cuotasPorEvento.containsKey(idEvento)) {
-            Map<String, Integer> defecto = new HashMap<>();
-            defecto.put("general", 0);
-            defecto.put("vip", 0);
-            defecto.put("premium", 0);
-            return defecto;
-        }
-        return cuotasPorEvento.get(idEvento);
-    }
 }

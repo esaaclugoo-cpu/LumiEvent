@@ -7,7 +7,13 @@
 </head>
 <body>
 <div class="container mt-4">
-    <h2>Listado de Eventos</h2>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Listado de Eventos</h2>
+        <div>
+            <a th:href="@{/admin}" class="btn btn-outline-secondary me-2">Volver a /admin</a>
+            <a th:href="@{/eventos/nuevo}" class="btn btn-success">Nuevo Evento</a>
+        </div>
+    </div>
     <table class="table table-bordered">
         <thead>
         <tr>

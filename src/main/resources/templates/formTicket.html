@@ -21,14 +21,7 @@
             </select>
         </div>
 
-        <div class="mb-3">
-            <label for="idAsiento" class="form-label">Asiento (opcional)</label>
-            <select class="form-select" id="idAsiento" th:field="*{id_asiento}">
-                <option th:value="''" th:selected="*{id_asiento == null}">Sin asiento</option>
-            </select>
-            <small class="text-muted">Solo se muestran asientos disponibles del evento seleccionado. Si eliges asiento, crea solo 1 ticket en total.</small>
-        </div>
-
+        <input type="hidden" th:field="*{id_asiento}" />
         <input type="hidden" th:field="*{id_compra}" />
 
         <div class="mb-3 p-3 border rounded bg-light">
@@ -72,46 +65,11 @@
 
         <button type="submit" id="btnGuardarTicket" class="btn btn-primary">Guardar Tickets</button>
         <a th:href="@{/tickets}" class="btn btn-secondary">Cancelar</a>
+        <a th:href="@{/admin}" class="btn btn-outline-secondary">Volver a /admin</a>
     </form>
 </div>
 
-<script th:inline="javascript">
-    (function () {
-        const idEvento = document.getElementById('idEvento');
-        const idAsiento = document.getElementById('idAsiento');
-        const asientosDisponiblesPorEvento = /*[[${asientosDisponiblesPorEvento}]]*/ {};
-        const asientoSeleccionadoInicial = idAsiento.value;
 
-        function sincronizarAsientos() {
-            const evento = idEvento.value;
-            const asientos = asientosDisponiblesPorEvento[evento] || [];
-            const seleccionadoActual = idAsiento.value || asientoSeleccionadoInicial;
-
-            idAsiento.innerHTML = '';
-            const opcionVacia = document.createElement('option');
-            opcionVacia.value = '';
-            opcionVacia.textContent = 'Sin asiento';
-            idAsiento.appendChild(opcionVacia);
-
-            asientos.forEach(function (asiento) {
-                const opt = document.createElement('option');
-                opt.value = String(asiento.id);
-                opt.textContent = asiento.label;
-                if (String(asiento.id) === String(seleccionadoActual)) {
-                    opt.selected = true;
-                }
-                idAsiento.appendChild(opt);
-            });
-
-            if (!idAsiento.value) {
-                opcionVacia.selected = true;
-            }
-        }
-
-        idEvento.addEventListener('change', sincronizarAsientos);
-        sincronizarAsientos();
-    })();
-</script>
 </body>
 </html>
 

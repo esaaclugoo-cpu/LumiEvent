@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -42,15 +43,42 @@ public class AsientoController {
     }
 
     @PostMapping("/asientos/guardar")
-    public String guardarAsiento(@ModelAttribute Asiento asiento) {
+    public String guardarAsiento(@ModelAttribute Asiento asiento,
+                                 @RequestParam(value = "cantidadGeneral", defaultValue = "0") int cantidadGeneral,
+                                 @RequestParam(value = "cantidadVip", defaultValue = "0") int cantidadVip,
+                                 @RequestParam(value = "cantidadPremium", defaultValue = "0") int cantidadPremium,
+                                 Model model) {
         if (asiento.getId_lugar() <= 0) {
-            return asiento.getId() > 0 ? "redirect:/asientos/editar/" + asiento.getId() : "redirect:/asientos/nuevo";
+            model.addAttribute("asiento", asiento);
+            model.addAttribute("lugares", obtenerLugaresRegistrados());
+            model.addAttribute("errorMensaje", "Debes seleccionar un lugar valido.");
+            return "formAsiento";
         }
+
+        if (cantidadGeneral < 0 || cantidadVip < 0 || cantidadPremium < 0) {
+            model.addAttribute("asiento", asiento);
+            model.addAttribute("lugares", obtenerLugaresRegistrados());
+            model.addAttribute("errorMensaje", "Las cantidades por tipo no pueden ser negativas.");
+            return "formAsiento";
+        }
+
+        int cantidadTotalMasiva = cantidadGeneral + cantidadVip + cantidadPremium;
 
         if (asiento.getId() > 0) {
             asientoService.actualizarAsiento(asiento);
+        } else if (cantidadTotalMasiva > 0) {
+            if (asiento.getFila() == null || asiento.getFila().isBlank()) {
+                model.addAttribute("asiento", asiento);
+                model.addAttribute("lugares", obtenerLugaresRegistrados());
+                model.addAttribute("errorMensaje", "Debes indicar la fila para generar asientos en masa.");
+                return "formAsiento";
+            }
+            asientoService.guardarAsientosMasivos(asiento, cantidadGeneral, cantidadVip, cantidadPremium);
         } else {
-            asientoService.guardarAsiento(asiento);
+            model.addAttribute("asiento", asiento);
+            model.addAttribute("lugares", obtenerLugaresRegistrados());
+            model.addAttribute("errorMensaje", "Debes indicar una cantidad de asientos por tipo para crear asientos nuevos.");
+            return "formAsiento";
         }
         return "redirect:/asientos";
     }

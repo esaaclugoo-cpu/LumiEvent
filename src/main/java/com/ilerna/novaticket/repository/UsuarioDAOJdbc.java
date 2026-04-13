@@ -107,6 +107,27 @@ public class UsuarioDAOJdbc implements UsuarioDAO {
     }
 
     @Override
+    public Usuario obtenerPorEmail(String email) {
+        Connection conn = getConnection();
+        if (conn == null || email == null || email.isBlank()) {
+            return null;
+        }
+
+        String sql = "SELECT * FROM usuario WHERE LOWER(TRIM(email)) = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, email.trim().toLowerCase());
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapearUsuario(rs);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
     public List<Usuario> listarTodos() {
         Connection conn = getConnection();
         List<Usuario> usuarios = new ArrayList<>();

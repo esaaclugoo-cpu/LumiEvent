@@ -4,11 +4,12 @@ import com.ilerna.novaticket.model.Asiento;
 import com.ilerna.novaticket.model.Compra;
 import com.ilerna.novaticket.model.Evento;
 import com.ilerna.novaticket.model.Ticket;
+import com.ilerna.novaticket.model.Usuario;
+import com.ilerna.novaticket.model.UsuarioEnum;
 import com.ilerna.novaticket.service.AsientoService;
 import com.ilerna.novaticket.service.CompraService;
 import com.ilerna.novaticket.service.EventoService;
 import com.ilerna.novaticket.service.TicketService;
-import com.ilerna.novaticket.service.UsuarioService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Controller
 public class HomeController {
@@ -40,28 +42,27 @@ public class HomeController {
     private final EventoService eventoService;
     private final TicketService ticketService;
     private final CompraService compraService;
-    private final UsuarioService usuarioService;
     private final AsientoService asientoService;
 
     public HomeController(EventoService eventoService,
                           TicketService ticketService,
                           CompraService compraService,
-                          UsuarioService usuarioService,
                           AsientoService asientoService) {
         this.eventoService = eventoService;
         this.ticketService = ticketService;
         this.compraService = compraService;
-        this.usuarioService = usuarioService;
         this.asientoService = asientoService;
     }
 
-    @GetMapping("/home")
+    @GetMapping({"/", "/home"})
     public String redirigirHomeCliente() {
         return "redirect:/cliente/home";
     }
 
     @GetMapping("/cliente/home")
-    public String mostrarHomeCliente(Model model, HttpSession session) {
+    public String mostrarHomeCliente(@RequestParam(value = "error", required = false) String error,
+                                     Model model,
+                                     HttpSession session) {
         List<Evento> eventos = eventoService.listarTodosLosEventos();
         Map<Integer, Integer> disponibles = new LinkedHashMap<>();
 
@@ -74,6 +75,10 @@ public class HomeController {
         model.addAttribute("eventos", eventos);
         model.addAttribute("disponibles", disponibles);
         model.addAttribute("carritoCantidad", carrito.size());
+        cargarDatosSesion(model, session);
+        if (error != null && !error.isBlank()) {
+            model.addAttribute("errorMensaje", error);
+        }
         return "home";
     }
 
@@ -91,6 +96,8 @@ public class HomeController {
         if (ok != null && ok == 1) {
             model.addAttribute("okMensaje", "Se agrego al carrito correctamente.");
         }
+
+        cargarDatosSesion(model, session);
 
         return "homeEvento";
     }
@@ -160,6 +167,8 @@ public class HomeController {
             model.addAttribute("errorMensaje", error);
         }
 
+        cargarDatosSesion(model, session);
+
         return "carrito";
     }
 
@@ -180,9 +189,9 @@ public class HomeController {
             return "redirect:/cliente/carrito?error=El carrito esta vacio.";
         }
 
-        Integer idUsuario = usuarioService.obtenerIdClientePorDefecto();
-        if (idUsuario == null) {
-            return "redirect:/cliente/carrito?error=No hay usuarios cliente registrados para completar la compra.";
+        Usuario usuarioSesion = obtenerUsuarioSesion(session);
+        if (usuarioSesion == null) {
+            return "redirect:/login?error=Inicia%20sesion%20para%20comprar%20tickets";
         }
 
         Map<Integer, Map<String, Integer>> cantidadPorEventoTipo = new LinkedHashMap<>();
@@ -192,39 +201,70 @@ public class HomeController {
                     .merge(normalizarTipo(item.getTipo()), item.getCantidad(), Integer::sum);
         }
 
-        Map<Integer, List<Asiento>> asientosDisponiblesPorEvento = new LinkedHashMap<>();
+        Map<Integer, Map<String, List<Asiento>>> asientosDisponiblesPorEventoTipo = new LinkedHashMap<>();
         for (Map.Entry<Integer, Map<String, Integer>> entry : cantidadPorEventoTipo.entrySet()) {
             Evento evento = eventoService.obtenerEventoPorId(entry.getKey());
             if (evento == null) {
                 return "redirect:/cliente/carrito?error=Uno de los eventos ya no existe.";
             }
 
+            Map<String, List<Asiento>> asientosLibresPorTipo = new LinkedHashMap<>();
+
             for (Map.Entry<String, Integer> porTipo : entry.getValue().entrySet()) {
                 String tipo = porTipo.getKey();
                 int cantidadTipo = porTipo.getValue();
-                int disponiblesTipo = obtenerStockDisponiblePorEventoYTipo(evento.getId(), tipo);
+                List<Ticket> stockTipo = obtenerTicketsStockPorEventoYTipo(evento.getId(), tipo);
+                int disponiblesTipo = stockTipo.size();
 
                 if (cantidadTipo > disponiblesTipo) {
                     String mensaje = "No hay disponibilidad suficiente para " + evento.getNombre() + " (" + tipo.toUpperCase(Locale.ROOT) + ").";
                     return "redirect:/cliente/carrito?error=" + URLEncoder.encode(mensaje, StandardCharsets.UTF_8);
                 }
-            }
 
-            List<Asiento> asientosLibres = obtenerAsientosLibresParaEvento(evento.getId());
-            asientosDisponiblesPorEvento.put(evento.getId(), new ArrayList<>(asientosLibres));
+                int ticketsSinAsiento = 0;
+                for (int i = 0; i < cantidadTipo; i++) {
+                    if (stockTipo.get(i).getId_asiento() == null) {
+                        ticketsSinAsiento++;
+                    }
+                }
+
+                List<Asiento> asientosLibresTipo = obtenerAsientosLibresParaEventoYTipo(evento.getId(), tipo);
+                asientosLibresPorTipo.put(tipo, asientosLibresTipo);
+
+                if (ticketsSinAsiento > asientosLibresTipo.size()) {
+                    String mensaje = "No hay asientos disponibles para " + evento.getNombre() + " (" + tipo.toUpperCase(Locale.ROOT) + ").";
+                    return "redirect:/cliente/carrito?error=" + URLEncoder.encode(mensaje, StandardCharsets.UTF_8);
+                }
+            }
+            asientosDisponiblesPorEventoTipo.put(evento.getId(), asientosLibresPorTipo);
         }
 
         Compra compra = new Compra();
-        compra.setId_usuario(idUsuario);
+        compra.setId_usuario(usuarioSesion.getId());
         compra.setFecha(LocalDateTime.now());
         compra.setTotal(calcularTotalCarrito(carrito));
         compraService.guardarCompra(compra);
 
         for (CarritoItem item : carrito) {
             List<Ticket> stock = obtenerTicketsStockPorEventoYTipo(item.getIdEvento(), item.getTipo());
+            String tipoNormalizado = normalizarTipo(item.getTipo());
+            List<Asiento> asientosDisponiblesTipo = asientosDisponiblesPorEventoTipo
+                    .getOrDefault(item.getIdEvento(), new LinkedHashMap<>())
+                    .getOrDefault(tipoNormalizado, new ArrayList<>());
+
             for (int i = 0; i < item.getCantidad(); i++) {
                 Ticket ticket = stock.get(i);
                 ticket.setId_compra(compra.getId());
+
+                if (ticket.getId_asiento() == null) {
+                    Asiento asientoAsignado = extraerAsientoAleatorio(asientosDisponiblesTipo);
+                    if (asientoAsignado == null) {
+                        String mensaje = "No se pudo asignar asiento para " + item.getNombreEvento() + " (" + tipoNormalizado.toUpperCase(Locale.ROOT) + ").";
+                        return "redirect:/cliente/carrito?error=" + URLEncoder.encode(mensaje, StandardCharsets.UTF_8);
+                    }
+                    ticket.setId_asiento(asientoAsignado.getId());
+                }
+
                 ticketService.actualizarTicket(ticket);
             }
         }
@@ -269,15 +309,6 @@ public class HomeController {
         return ticketService.obtenerCantidadVendidaPorEvento(idEvento);
     }
 
-    private int obtenerVendidosPorEventoYTipo(int idEvento, String tipo) {
-        if (idEvento <= 0) {
-            return 0;
-        }
-
-        String tipoNormalizado = normalizarTipo(tipo);
-        return ticketService.obtenerCantidadVendidaPorEventoYTipo(idEvento, tipoNormalizado);
-    }
-
     private List<Asiento> obtenerAsientosLibresParaEvento(int idEvento) {
         Evento evento = eventoService.obtenerEventoPorId(idEvento);
         if (evento == null) {
@@ -307,6 +338,25 @@ public class HomeController {
 
         libres.sort(Comparator.comparing(Asiento::getFila).thenComparingInt(Asiento::getNumero_asiento));
         return libres;
+    }
+
+    private List<Asiento> obtenerAsientosLibresParaEventoYTipo(int idEvento, String tipo) {
+        String tipoNormalizado = normalizarTipo(tipo);
+        List<Asiento> libresPorTipo = new ArrayList<>();
+        for (Asiento asiento : obtenerAsientosLibresParaEvento(idEvento)) {
+            if (normalizarTipo(asiento.getZona()).equals(tipoNormalizado)) {
+                libresPorTipo.add(asiento);
+            }
+        }
+        return libresPorTipo;
+    }
+
+    private Asiento extraerAsientoAleatorio(List<Asiento> asientosDisponibles) {
+        if (asientosDisponibles == null || asientosDisponibles.isEmpty()) {
+            return null;
+        }
+        int indice = ThreadLocalRandom.current().nextInt(asientosDisponibles.size());
+        return asientosDisponibles.remove(indice);
     }
 
     private BigDecimal obtenerPrecioPorTipo(String tipo) {
@@ -344,15 +394,6 @@ public class HomeController {
         return null;
     }
 
-    private int obtenerCantidadEnCarritoPorEvento(List<CarritoItem> carrito, int idEvento) {
-        int total = 0;
-        for (CarritoItem item : carrito) {
-            if (item.getIdEvento() == idEvento) {
-                total += item.getCantidad();
-            }
-        }
-        return total;
-    }
 
     private int obtenerCantidadEnCarritoPorEventoYTipo(List<CarritoItem> carrito, int idEvento, String tipo) {
         int total = 0;
@@ -365,21 +406,6 @@ public class HomeController {
         return total;
     }
 
-    private Map<String, Integer> obtenerCuotasDelEvento(int idEvento, HttpSession session) {
-        Object attr = session.getAttribute("cuotasTicketsPorEvento");
-        Map<String, Integer> defecto = new LinkedHashMap<>();
-        defecto.put("general", 0);
-        defecto.put("vip", 0);
-        defecto.put("premium", 0);
-
-        if (attr == null) {
-            return defecto;
-        }
-
-        @SuppressWarnings("unchecked")
-        Map<Integer, Map<String, Integer>> cuotasPorEvento = (Map<Integer, Map<String, Integer>>) attr;
-        return cuotasPorEvento.getOrDefault(idEvento, defecto);
-    }
 
     private int obtenerDisponiblesTotalesPorEvento(List<CarritoItem> carrito, Evento evento) {
         int total = 0;
@@ -429,6 +455,17 @@ public class HomeController {
             total = total.add(item.getSubtotal());
         }
         return total.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private Usuario obtenerUsuarioSesion(HttpSession session) {
+        Object usuario = session.getAttribute(AuthController.USUARIO_SESION_KEY);
+        return usuario instanceof Usuario ? (Usuario) usuario : null;
+    }
+
+    private void cargarDatosSesion(Model model, HttpSession session) {
+        Usuario usuario = obtenerUsuarioSesion(session);
+        model.addAttribute("usuarioSesion", usuario);
+        model.addAttribute("esAdmin", usuario != null && usuario.getTipo_usuario() == UsuarioEnum.admin);
     }
 
     public static class CompraEntrada {

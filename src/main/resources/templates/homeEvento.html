@@ -10,7 +10,14 @@
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <a th:href="@{/cliente/home}" class="btn btn-link px-0">&larr; Volver al home</a>
-        <a th:href="@{/cliente/carrito}" class="btn btn-success" th:text="'Carrito (' + ${carritoCantidad} + ')'">Carrito</a>
+        <div class="d-flex gap-2">
+            <a th:href="@{/cliente/carrito}" class="btn btn-success" th:text="'Carrito (' + ${carritoCantidad} + ')'">Carrito</a>
+            <a th:if="${esAdmin}" th:href="@{/admin}" class="btn btn-outline-secondary">Panel admin</a>
+            <a th:if="${usuarioSesion == null}" th:href="@{/login}" class="btn btn-primary">Iniciar sesion</a>
+            <form th:if="${usuarioSesion != null}" th:action="@{/logout}" method="post" class="d-inline">
+                <button type="submit" class="btn btn-outline-danger">Salir</button>
+            </form>
+        </div>
     </div>
 
     <div class="row g-4">
