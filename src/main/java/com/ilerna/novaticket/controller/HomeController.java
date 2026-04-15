@@ -172,6 +172,94 @@ public class HomeController {
         return "carrito";
     }
 
+    @GetMapping("/cliente/historial")
+    public String mostrarHistorialCompras(Model model, HttpSession session) {
+        Usuario usuarioSesion = obtenerUsuarioSesion(session);
+        if (usuarioSesion == null) {
+            return "redirect:/login?error=Inicia%20sesion%20para%20ver%20tu%20historial";
+        }
+
+        boolean esAdminHistorial = usuarioSesion.getTipo_usuario() == UsuarioEnum.admin;
+
+        Map<Integer, Evento> eventosPorId = new LinkedHashMap<>();
+        for (Evento evento : eventoService.listarTodosLosEventos()) {
+            eventosPorId.put(evento.getId(), evento);
+        }
+
+        Map<Integer, Asiento> asientosPorId = new LinkedHashMap<>();
+        for (Asiento asiento : asientoService.listarTodosLosAsientos()) {
+            asientosPorId.put(asiento.getId(), asiento);
+        }
+
+        List<Ticket> tickets = ticketService.listarTodosLosTickets();
+        List<HistorialCompraView> historial = new ArrayList<>();
+
+        List<Compra> compras = new ArrayList<>(compraService.listarTodasLasCompras());
+        compras.sort(Comparator.comparing(Compra::getFecha, Comparator.nullsLast(Comparator.naturalOrder())).reversed());
+
+        for (Compra compra : compras) {
+            if (compra == null || compra.getId() <= 0) {
+                continue;
+            }
+            if (compra.getTotal() == null || compra.getTotal().compareTo(BigDecimal.ZERO) <= 0) {
+                continue;
+            }
+            if (!esAdminHistorial && compra.getId_usuario() != usuarioSesion.getId()) {
+                continue;
+            }
+
+            HistorialCompraView compraView = new HistorialCompraView();
+            compraView.setId(compra.getId());
+            compraView.setIdUsuario(compra.getId_usuario());
+            compraView.setFecha(compra.getFecha());
+            compraView.setTotal(compra.getTotal());
+
+            List<HistorialDetalleView> detalles = new ArrayList<>();
+            for (Ticket ticket : tickets) {
+                if (ticket.getId_compra() != compra.getId()) {
+                    continue;
+                }
+
+                HistorialDetalleView detalle = new HistorialDetalleView();
+                detalle.setIdTicket(ticket.getId());
+                detalle.setTipo(ticket.getTipo());
+                detalle.setCantidad(ticket.getCantidad());
+                detalle.setPrecioUnitario(ticket.getPrecio_unitario());
+
+                BigDecimal precio = ticket.getPrecio_unitario() == null ? BigDecimal.ZERO : ticket.getPrecio_unitario();
+                detalle.setSubtotal(precio.multiply(BigDecimal.valueOf(ticket.getCantidad())).setScale(2, RoundingMode.HALF_UP));
+
+                Evento evento = eventosPorId.get(ticket.getId_evento());
+                if (evento != null) {
+                    detalle.setNombreEvento(evento.getNombre());
+                    detalle.setFechaEvento(evento.getFecha());
+                    detalle.setNombreLugar(evento.getNombre_lugar());
+                    detalle.setCiudadLugar(evento.getCiudad());
+                }
+
+                if (ticket.getId_asiento() != null) {
+                    Asiento asiento = asientosPorId.get(ticket.getId_asiento());
+                    if (asiento != null) {
+                        detalle.setFila(asiento.getFila());
+                        detalle.setNumeroAsiento(asiento.getNumero_asiento());
+                        detalle.setZona(asiento.getZona());
+                    }
+                }
+
+                detalles.add(detalle);
+            }
+
+            compraView.setDetalles(detalles);
+            historial.add(compraView);
+        }
+
+        model.addAttribute("historialCompras", historial);
+        model.addAttribute("esAdminHistorial", esAdminHistorial);
+        model.addAttribute("carritoCantidad", obtenerCarrito(session).size());
+        cargarDatosSesion(model, session);
+        return "historialCompras";
+    }
+
     @PostMapping("/cliente/carrito/eliminar")
     public String eliminarItemCarrito(@RequestParam("index") int index, HttpSession session) {
         List<CarritoItem> carrito = obtenerCarrito(session);
@@ -276,27 +364,35 @@ public class HomeController {
     private void cargarDetalleEvento(Model model, Evento evento, CompraEntrada compraEntrada, HttpSession session) {
         List<CarritoItem> carrito = obtenerCarrito(session);
         Map<String, Integer> disponiblesPorTipo = new LinkedHashMap<>();
+        Map<String, BigDecimal> preciosPorTipo = new LinkedHashMap<>();
         int disponiblesReales = 0;
 
         for (String tipo : List.of("general", "vip", "premium")) {
+
             int stockTipo = obtenerStockDisponiblePorEventoYTipo(evento.getId(), tipo);
             int enCarritoTipo = obtenerCantidadEnCarritoPorEventoYTipo(carrito, evento.getId(), tipo);
             int disponiblesTipo = Math.max(stockTipo - enCarritoTipo, 0);
+
             disponiblesPorTipo.put(tipo, disponiblesTipo);
             disponiblesReales += disponiblesTipo;
+
+            List<Ticket> tickets = obtenerTicketsStockPorEventoYTipo(evento.getId(), tipo);
+
+            BigDecimal precio = tickets.stream().findFirst().map(Ticket::getPrecio_unitario).orElse(BigDecimal.ZERO);
+
+            preciosPorTipo.put(tipo, precio);
         }
 
         int vendidosTotal = obtenerVendidosPorEvento(evento.getId());
+
         model.addAttribute("evento", evento);
         model.addAttribute("vendidos", vendidosTotal);
         model.addAttribute("disponibles", disponiblesReales);
         model.addAttribute("disponiblesPorTipo", disponiblesPorTipo);
         model.addAttribute("carritoCantidad", carrito.size());
-        model.addAttribute("precios", Map.of(
-                "general", new BigDecimal("25.00"),
-                "vip", new BigDecimal("50.00"),
-                "premium", new BigDecimal("80.00")
-        ));
+
+        model.addAttribute("precios", preciosPorTipo);
+
         model.addAttribute("compraEntrada", compraEntrada);
     }
 
@@ -541,6 +637,165 @@ public class HomeController {
                 return BigDecimal.ZERO;
             }
             return precioUnitario.multiply(BigDecimal.valueOf(cantidad)).setScale(2, RoundingMode.HALF_UP);
+        }
+    }
+
+    public static class HistorialCompraView {
+        private int id;
+        private int idUsuario;
+        private LocalDateTime fecha;
+        private BigDecimal total;
+        private List<HistorialDetalleView> detalles = new ArrayList<>();
+
+        public int getId() {
+            return id;
+        }
+
+        public void setId(int id) {
+            this.id = id;
+        }
+
+        public int getIdUsuario() {
+            return idUsuario;
+        }
+
+        public void setIdUsuario(int idUsuario) {
+            this.idUsuario = idUsuario;
+        }
+
+        public LocalDateTime getFecha() {
+            return fecha;
+        }
+
+        public void setFecha(LocalDateTime fecha) {
+            this.fecha = fecha;
+        }
+
+        public BigDecimal getTotal() {
+            return total;
+        }
+
+        public void setTotal(BigDecimal total) {
+            this.total = total;
+        }
+
+        public List<HistorialDetalleView> getDetalles() {
+            return detalles;
+        }
+
+        public void setDetalles(List<HistorialDetalleView> detalles) {
+            this.detalles = detalles;
+        }
+    }
+
+    public static class HistorialDetalleView {
+        private int idTicket;
+        private String nombreEvento;
+        private java.time.LocalDate fechaEvento;
+        private String nombreLugar;
+        private String ciudadLugar;
+        private String tipo;
+        private int cantidad;
+        private BigDecimal precioUnitario;
+        private BigDecimal subtotal;
+        private String fila;
+        private Integer numeroAsiento;
+        private String zona;
+
+        public int getIdTicket() {
+            return idTicket;
+        }
+
+        public void setIdTicket(int idTicket) {
+            this.idTicket = idTicket;
+        }
+
+        public String getNombreEvento() {
+            return nombreEvento;
+        }
+
+        public void setNombreEvento(String nombreEvento) {
+            this.nombreEvento = nombreEvento;
+        }
+
+        public java.time.LocalDate getFechaEvento() {
+            return fechaEvento;
+        }
+
+        public void setFechaEvento(java.time.LocalDate fechaEvento) {
+            this.fechaEvento = fechaEvento;
+        }
+
+        public String getNombreLugar() {
+            return nombreLugar;
+        }
+
+        public void setNombreLugar(String nombreLugar) {
+            this.nombreLugar = nombreLugar;
+        }
+
+        public String getCiudadLugar() {
+            return ciudadLugar;
+        }
+
+        public void setCiudadLugar(String ciudadLugar) {
+            this.ciudadLugar = ciudadLugar;
+        }
+
+        public String getTipo() {
+            return tipo;
+        }
+
+        public void setTipo(String tipo) {
+            this.tipo = tipo;
+        }
+
+        public int getCantidad() {
+            return cantidad;
+        }
+
+        public void setCantidad(int cantidad) {
+            this.cantidad = cantidad;
+        }
+
+        public BigDecimal getPrecioUnitario() {
+            return precioUnitario;
+        }
+
+        public void setPrecioUnitario(BigDecimal precioUnitario) {
+            this.precioUnitario = precioUnitario;
+        }
+
+        public BigDecimal getSubtotal() {
+            return subtotal;
+        }
+
+        public void setSubtotal(BigDecimal subtotal) {
+            this.subtotal = subtotal;
+        }
+
+        public String getFila() {
+            return fila;
+        }
+
+        public void setFila(String fila) {
+            this.fila = fila;
+        }
+
+        public Integer getNumeroAsiento() {
+            return numeroAsiento;
+        }
+
+        public void setNumeroAsiento(Integer numeroAsiento) {
+            this.numeroAsiento = numeroAsiento;
+        }
+
+        public String getZona() {
+            return zona;
+        }
+
+        public void setZona(String zona) {
+            this.zona = zona;
         }
     }
 }

@@ -5,13 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Evento - Cliente</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/styles.css}" rel="stylesheet">
 </head>
 <body>
+<header>
+    <nav class="nt-navbar" aria-label="Navegacion evento">
+        <div class="container d-flex align-items-center justify-content-between gap-3">
+            <a th:href="@{/cliente/home}" class="nt-brand" aria-label="Inicio NovaTicket">
+                <img th:src="@{/img/logo2.png}" src="/img/logo2.png" alt="NovaTicket" class="nt-logo">
+            </a>
+            <a th:href="@{/cliente/carrito}" class="nt-nav-icon" aria-label="Carrito">
+                <i class="bi bi-cart3" aria-hidden="true"></i>
+                <span class="nt-cart-count" th:text="${carritoCantidad}">0</span>
+            </a>
+        </div>
+    </nav>
+</header>
+
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <a th:href="@{/cliente/home}" class="btn btn-link px-0">&larr; Volver al home</a>
         <div class="d-flex gap-2">
-            <a th:href="@{/cliente/carrito}" class="btn btn-success" th:text="'Carrito (' + ${carritoCantidad} + ')'">Carrito</a>
+            <a th:href="@{/cliente/carrito}" class="btn btn-success" aria-label="Carrito">
+                <i class="bi bi-cart3" aria-hidden="true"></i>
+                <span class="ms-1" th:text="${carritoCantidad}">0</span>
+            </a>
             <a th:if="${esAdmin}" th:href="@{/admin}" class="btn btn-outline-secondary">Panel admin</a>
             <a th:if="${usuarioSesion == null}" th:href="@{/login}" class="btn btn-primary">Iniciar sesion</a>
             <form th:if="${usuarioSesion != null}" th:action="@{/logout}" method="post" class="d-inline">
@@ -45,7 +64,16 @@
                     <h3 class="h5 mb-3">Anadir al carrito</h3>
                     <div th:if="${errorMensaje}" class="alert alert-danger" th:text="${errorMensaje}"></div>
 
-                    <form th:action="@{/cliente/evento/{id}/agregar-carrito(id=${evento.id})}" th:object="${compraEntrada}" method="post">
+                    <form id="form-compra-evento"
+                          th:action="@{/cliente/evento/{id}/agregar-carrito(id=${evento.id})}"
+                          th:object="${compraEntrada}"
+                          method="post"
+                          th:attr="data-disp-general=${disponiblesPorTipo['general']},
+                                   data-disp-vip=${disponiblesPorTipo['vip']},
+                                   data-disp-premium=${disponiblesPorTipo['premium']},
+                                   data-precio-general=${precios['general']},
+                                   data-precio-vip=${precios['vip']},
+                                   data-precio-premium=${precios['premium']}">
                         <div class="mb-3">
                             <label for="tipo" class="form-label">Tipo de ticket</label>
                             <select id="tipo" class="form-select" th:field="*{tipo}" required>
@@ -73,11 +101,14 @@
                         </div>
 
                         <button id="btnAnadirCarrito" type="submit" class="btn btn-primary w-100" th:disabled="${disponibles <= 0}">Anadir al carrito</button>
+                        <a th:href="@{/cliente/home}" class="btn btn-outline-secondary w-100 mt-2">Volver a home</a>
                         <p id="sinDisponibilidad" class="text-danger mt-2 mb-0 d-none">No quedan tickets para este tipo en este evento.</p>
 
                         <div th:if="${okMensaje}" class="alert alert-success mt-3 mb-2" th:text="${okMensaje}"></div>
                         <div th:if="${okMensaje}" class="d-grid gap-2 d-md-flex">
-                            <a th:href="@{/cliente/carrito}" class="btn btn-success">Proceder al pago</a>
+                            <a th:href="@{/cliente/carrito}" class="btn btn-success" aria-label="Ir al carrito">
+                                <i class="bi bi-cart3" aria-hidden="true"></i>
+                            </a>
                             <a th:href="@{/cliente/home}" class="btn btn-outline-primary">Seguir comprando</a>
                         </div>
                     </form>
@@ -87,61 +118,6 @@
     </div>
 </div>
 
-<script th:inline="javascript">
-    (function () {
-        const tipo = document.getElementById('tipo');
-        const cantidad = document.getElementById('cantidad');
-        const total = document.getElementById('totalEstimado');
-        const maximoTipo = document.getElementById('maximoTipo');
-        const boton = document.getElementById('btnAnadirCarrito');
-        const sinDisponibilidad = document.getElementById('sinDisponibilidad');
-
-        const disponiblesPorTipo = /*[[${disponiblesPorTipo}]]*/ {};
-
-        const precios = {
-            general: 25.00,
-            vip: 50.00,
-            premium: 80.00
-        };
-
-        function obtenerDisponiblesTipo() {
-            const clave = (tipo.value || '').toLowerCase();
-            return parseInt((disponiblesPorTipo[clave] ?? 0), 10) || 0;
-        }
-
-        function actualizarDisponibilidad() {
-            const disponibles = obtenerDisponiblesTipo();
-            maximoTipo.textContent = String(disponibles);
-            cantidad.max = String(Math.max(disponibles, 1));
-
-            if (disponibles <= 0) {
-                boton.disabled = true;
-                sinDisponibilidad.classList.remove('d-none');
-            } else {
-                boton.disabled = false;
-                sinDisponibilidad.classList.add('d-none');
-                if (parseInt(cantidad.value || '1', 10) > disponibles) {
-                    cantidad.value = String(disponibles);
-                }
-            }
-        }
-
-        function calcular() {
-            const clave = (tipo.value || '').toLowerCase();
-            const precio = precios[clave] || 0;
-            const cant = parseInt(cantidad.value || '0', 10);
-            const totalValor = (precio * Math.max(cant, 0)).toFixed(2);
-            total.textContent = totalValor;
-        }
-
-        tipo.addEventListener('change', function () {
-            actualizarDisponibilidad();
-            calcular();
-        });
-        cantidad.addEventListener('input', calcular);
-        actualizarDisponibilidad();
-        calcular();
-    })();
-</script>
+<script th:src="@{/js/app.js}" src="/js/app.js"></script>
 </body>
 </html>

@@ -39,7 +39,7 @@ public class EventoController {
     @GetMapping("/eventos")
     public String listarEvento(Model model) {
         model.addAttribute("eventos", eventoService.listarTodosLosEventos());
-        return "crudtest";
+        return "crudEvento";
     }
 
     @GetMapping("/eventos/nuevo")

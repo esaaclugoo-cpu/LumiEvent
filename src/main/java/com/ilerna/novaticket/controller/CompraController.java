@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 @Controller
 public class CompraController {
 
@@ -27,6 +30,10 @@ public class CompraController {
     @GetMapping("/compras")
     public String listarCompras(Model model) {
         model.addAttribute("compras", compraService.listarTodasLasCompras());
+        Map<Integer, String> usuarios = new LinkedHashMap<>();
+        usuarioService.listarTodosLosUsuarios().forEach(usuario ->
+                usuarios.put(usuario.getId(), usuario.getNombre() + " (" + usuario.getEmail() + ")"));
+        model.addAttribute("usuariosMap", usuarios);
         return "crudCompra";
     }
 

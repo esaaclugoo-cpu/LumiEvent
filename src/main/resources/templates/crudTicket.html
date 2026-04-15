@@ -1,28 +1,41 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Listado de Tickets</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/styles.css}" rel="stylesheet">
 </head>
-<body>
-<div class="container mt-4">
+<body class="admin-panel">
+<header>
+    <nav class="nt-navbar nt-navbar-admin" aria-label="Navegacion tickets admin">
+        <div class="container position-relative d-flex justify-content-center align-items-center">
+            <a th:href="@{/admin}" class="nt-admin-back btn btn-outline-secondary btn-sm">Volver a admin</a>
+            <a th:href="@{/admin}" class="nt-brand" aria-label="Panel admin NovaTicket">
+                <img th:src="@{/img/logo2.png}" src="/img/logo2.png" alt="NovaTicket" class="nt-logo">
+            </a>
+        </div>
+    </nav>
+</header>
+
+<div class="container mt-4 crud-container">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Listado de Tickets</h2>
         <div>
-            <a th:href="@{/admin}" class="btn btn-outline-secondary me-2">Volver a /admin</a>
+            <a th:href="@{/admin}" class="btn btn-outline-secondary me-2">Volver a admin</a>
             <a th:href="@{/tickets/nuevo}" class="btn btn-success">Nuevo Ticket</a>
         </div>
     </div>
 
-    <table class="table table-bordered table-striped">
+    <div class="table-responsive">
+    <table class="table table-bordered table-striped table-hover align-middle">
         <thead>
         <tr>
             <th>ID</th>
-            <th>ID Evento</th>
-            <th>ID Asiento</th>
+            <th>Evento</th>
+            <th>Asiento</th>
             <th>Tipo</th>
-            <th>ID Compra</th>
+            <th>Compra</th>
             <th>Cantidad</th>
             <th>Precio Unitario</th>
             <th>Acciones</th>
@@ -34,10 +47,10 @@
         </tr>
         <tr th:each="ticket : ${tickets}">
             <td th:text="${ticket.id}"></td>
-            <td th:text="${ticket.id_evento}"></td>
-            <td th:text="${ticket.id_asiento != null ? ticket.id_asiento : 'Sin asiento'}"></td>
+            <td th:text="${eventosMap[ticket.id_evento] != null ? eventosMap[ticket.id_evento] : 'ID ' + ticket.id_evento}"></td>
+            <td th:text="${ticket.id_asiento != null ? (asientosMap[ticket.id_asiento] != null ? asientosMap[ticket.id_asiento] : 'ID ' + ticket.id_asiento) : 'Sin asiento'}"></td>
             <td th:text="${ticket.tipo}"></td>
-            <td th:text="${ticket.id_compra}"></td>
+            <td th:text="${comprasMap[ticket.id_compra] != null ? comprasMap[ticket.id_compra] : 'ID ' + ticket.id_compra}"></td>
             <td th:text="${ticket.cantidad}"></td>
             <td th:text="${ticket.precio_unitario}"></td>
             <td>
@@ -47,6 +60,7 @@
         </tr>
         </tbody>
     </table>
+    </div>
 </div>
 </body>
 </html>

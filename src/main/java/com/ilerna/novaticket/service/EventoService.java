@@ -3,6 +3,8 @@ package com.ilerna.novaticket.service;
 
 import com.ilerna.novaticket.model.Evento;
 import com.ilerna.novaticket.repository.EventoDAO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,8 @@ import java.util.UUID;
 
 @Service
 public class EventoService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(EventoService.class);
 
     private final EventoDAO eventoDAO;
     private final String uploadDir;
@@ -37,7 +41,11 @@ public class EventoService {
     }
 
     public void eliminarEvento(int id) {
+        Evento evento = eventoDAO.obtenerPorId(id);
         eventoDAO.eliminar(id);
+        if (evento != null) {
+            eliminarImagenSiExiste(evento.getRuta_imagen());
+        }
     }
 
     public Evento obtenerEventoPorId(int id) {
@@ -70,9 +78,7 @@ public class EventoService {
             Files.copy(imagenFile.getInputStream(), destino, StandardCopyOption.REPLACE_EXISTING);
 
             // Si se sube una nueva imagen, se elimina la anterior para no dejar residuos.
-            if (rutaImagenActual != null && !rutaImagenActual.isBlank()) {
-                Files.deleteIfExists(directorio.resolve(rutaImagenActual));
-            }
+            eliminarImagenSiExiste(rutaImagenActual);
 
             return nombreNuevo;
         } catch (IOException e) {
@@ -87,6 +93,24 @@ public class EventoService {
 
         int ultimoPunto = nombreArchivo.lastIndexOf('.');
         return nombreArchivo.substring(ultimoPunto);
+    }
+
+    private void eliminarImagenSiExiste(String rutaImagen) {
+        if (rutaImagen == null || rutaImagen.isBlank()) {
+            return;
+        }
+
+        try {
+            Path directorio = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Path archivoImagen = directorio.resolve(rutaImagen).normalize();
+            if (!archivoImagen.startsWith(directorio)) {
+                LOGGER.warn("Se intento eliminar una imagen fuera del directorio permitido: {}", rutaImagen);
+                return;
+            }
+            Files.deleteIfExists(archivoImagen);
+        } catch (IOException e) {
+            LOGGER.warn("No se pudo eliminar la imagen del evento: {}", rutaImagen, e);
+        }
     }
 
 

@@ -5,10 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Iniciar sesion</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/styles.css}" rel="stylesheet">
 </head>
 <body>
-<div class="container py-5" style="max-width: 520px;">
-    <h1 class="h3 mb-4">Iniciar sesion</h1>
+<header>
+    <nav class="nt-navbar" aria-label="Navegacion de acceso">
+        <div class="container d-flex align-items-center justify-content-center">
+            <a th:href="@{/cliente/home}" class="nt-brand" aria-label="Inicio NovaTicket">
+                <img th:src="@{/img/logo2.png}" src="/img/logo2.png" alt="NovaTicket" class="nt-logo">
+            </a>
+        </div>
+    </nav>
+</header>
+
+<div class="auth-wrapper">
+    <div class="auth-card">
+    <h1 class="auth-brand-title">Iniciar sesion</h1>
 
     <div th:if="${errorMensaje}" class="alert alert-danger" th:text="${errorMensaje}"></div>
     <div th:if="${okMensaje}" class="alert alert-success" th:text="${okMensaje}"></div>
@@ -21,7 +34,12 @@
 
         <div class="mb-3">
             <label for="password" class="form-label">Contrasena</label>
-            <input id="password" name="password" type="password" class="form-control" required>
+            <div class="input-group">
+                <input id="password" name="password" type="password" class="form-control" required>
+                <button type="button" class="btn btn-outline-primary" id="togglePassword" aria-label="Mostrar contrasena">
+                    <i id="togglePasswordIcon" class="bi bi-eye" aria-hidden="true"></i>
+                </button>
+            </div>
         </div>
 
         <button type="submit" class="btn btn-primary">Entrar</button>
@@ -31,7 +49,9 @@
         <a th:href="@{/registro}" class="btn btn-outline-primary">Crear cuenta</a>
         <a th:href="@{/cliente/home}" class="btn btn-outline-secondary">Volver al home</a>
     </div>
+    </div>
 </div>
+<script th:src="@{/js/app.js}" src="/js/app.js"></script>
 </body>
 </html>
 

@@ -4,6 +4,7 @@ import com.ilerna.novaticket.model.Ticket;
 import com.ilerna.novaticket.model.Asiento;
 import com.ilerna.novaticket.model.Compra;
 import com.ilerna.novaticket.model.Evento;
+import com.ilerna.novaticket.model.Usuario;
 import com.ilerna.novaticket.service.AsientoService;
 import com.ilerna.novaticket.service.CompraService;
 import com.ilerna.novaticket.service.EventoService;
@@ -20,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -49,10 +49,30 @@ public class TicketController {
 
     @GetMapping("/tickets")
     public String listarTickets(Model model) {
-        model.addAttribute("tickets", ticketService.listarTodosLosTickets());
-        model.addAttribute("eventos", eventoService.listarTodosLosEventos());
-        model.addAttribute("compras", compraService.listarTodasLasCompras());
-        model.addAttribute("asientos", asientoService.listarTodosLosAsientos());
+        List<Ticket> tickets = ticketService.listarTodosLosTickets();
+        List<Evento> eventos = eventoService.listarTodosLosEventos();
+        List<Compra> compras = compraService.listarTodasLasCompras();
+        List<Asiento> asientos = asientoService.listarTodosLosAsientos();
+
+        Map<Integer, String> eventosMap = new LinkedHashMap<>();
+        eventos.forEach(evento -> eventosMap.put(evento.getId(), evento.getNombre()));
+
+        Map<Integer, String> comprasMap = new LinkedHashMap<>();
+        compras.forEach(compra -> comprasMap.put(compra.getId(), "Compra #" + compra.getId()));
+
+        Map<Integer, String> asientosMap = new LinkedHashMap<>();
+        asientos.forEach(asiento -> asientosMap.put(
+                asiento.getId(),
+                asiento.getFila() + "-" + asiento.getNumero_asiento() + " (" + asiento.getZona() + ")"
+        ));
+
+        model.addAttribute("tickets", tickets);
+        model.addAttribute("eventos", eventos);
+        model.addAttribute("compras", compras);
+        model.addAttribute("asientos", asientos);
+        model.addAttribute("eventosMap", eventosMap);
+        model.addAttribute("comprasMap", comprasMap);
+        model.addAttribute("asientosMap", asientosMap);
         return "crudTicket";
     }
 
@@ -127,7 +147,11 @@ public class TicketController {
                 recargarFormulario(model, ticket, "No se pudo crear la compra base para los tickets.");
                 return "formTicket";
             }
-            crearTicketsMultiples(ticket, cantidadGeneral, cantidadVip, cantidadPremium, precioGeneral, precioVip, precioPremium);
+            String errorCreacion = crearTicketsMultiples(ticket, cantidadGeneral, cantidadVip, cantidadPremium, precioGeneral, precioVip, precioPremium);
+            if (errorCreacion != null) {
+                recargarFormulario(model, ticket, errorCreacion);
+                return "formTicket";
+            }
         }
         return "redirect:/tickets";
     }
@@ -148,36 +172,6 @@ public class TicketController {
         return "redirect:/tickets";
     }
 
-    private boolean esTicketValido(Ticket ticket) {
-        return ticket.getId_evento() > 0
-                && ticket.getTipo() != null
-                && !ticket.getTipo().isBlank()
-                && ticket.getCantidad() > 0
-                && ticket.getPrecio_unitario() != null
-                && ticket.getPrecio_unitario().compareTo(BigDecimal.ZERO) > 0;
-    }
-
-    private String normalizarTipo(String tipo) {
-        if (tipo == null) {
-            return null;
-        }
-        String base = tipo.trim().toLowerCase(Locale.ROOT);
-        return switch (base) {
-            case "general" -> "General";
-            case "vip" -> "VIP";
-            case "premium" -> "Premium";
-            default -> null;
-        };
-    }
-
-    private BigDecimal obtenerPrecioPorTipo(String tipo) {
-        return switch (tipo) {
-            case "VIP" -> new BigDecimal("50.00");
-            case "Premium" -> new BigDecimal("80.00");
-            default -> new BigDecimal("25.00");
-        };
-    }
-
     private boolean asientoYaAsignado(Ticket ticket) {
         for (Ticket existente : ticketService.listarTodosLosTickets()) {
             if (existente.getId_evento() == ticket.getId_evento()
@@ -195,13 +189,19 @@ public class TicketController {
         model.addAttribute("errorMensaje", errorMensaje);
     }
 
-    private void crearTicketsMultiples(Ticket ticketBase, int cantidadGeneral, int cantidadVip, int cantidadPremium, BigDecimal precioGeneral, BigDecimal precioVip, BigDecimal precioPremium) {
-        crearTicketsDelTipo(ticketBase, "General", cantidadGeneral, precioGeneral);
-        crearTicketsDelTipo(ticketBase, "VIP", cantidadVip, precioVip);
-        crearTicketsDelTipo(ticketBase, "Premium", cantidadPremium, precioPremium);
+    private String crearTicketsMultiples(Ticket ticketBase, int cantidadGeneral, int cantidadVip, int cantidadPremium, BigDecimal precioGeneral, BigDecimal precioVip, BigDecimal precioPremium) {
+        String error = crearTicketsDelTipo(ticketBase, "General", cantidadGeneral, precioGeneral);
+        if (error != null) {
+            return error;
+        }
+        error = crearTicketsDelTipo(ticketBase, "VIP", cantidadVip, precioVip);
+        if (error != null) {
+            return error;
+        }
+        return crearTicketsDelTipo(ticketBase, "Premium", cantidadPremium, precioPremium);
     }
 
-    private void crearTicketsDelTipo(Ticket ticketBase, String tipo, int cantidad, BigDecimal precio) {
+    private String crearTicketsDelTipo(Ticket ticketBase, String tipo, int cantidad, BigDecimal precio) {
         for (int i = 0; i < cantidad; i++) {
             Ticket nuevoTicket = new Ticket();
             nuevoTicket.setId_evento(ticketBase.getId_evento());
@@ -212,53 +212,16 @@ public class TicketController {
             nuevoTicket.setCantidad(1);
             nuevoTicket.setPrecio_unitario(precio);
             ticketService.guardarTicket(nuevoTicket);
+            if (nuevoTicket.getId() <= 0) {
+                return "No se pudo guardar el ticket de tipo " + tipo + ". Revisa la compra asociada y las relaciones con la base de datos.";
+            }
         }
+        return null;
     }
 
     private void cargarDatosFormulario(Model model, Ticket ticket) {
         model.addAttribute("ticket", ticket);
         model.addAttribute("eventos", eventoService.listarTodosLosEventos());
-        model.addAttribute("asientosDisponiblesPorEvento", construirAsientosDisponiblesPorEvento(ticket));
-        model.addAttribute("disponiblesPorEventoTipo", construirDisponiblesPorEventoTipo(ticket));
-    }
-
-    private Map<Integer, List<Map<String, Object>>> construirAsientosDisponiblesPorEvento(Ticket ticketActual) {
-        Map<Integer, List<Map<String, Object>>> resultado = new LinkedHashMap<>();
-        List<Asiento> todosAsientos = asientoService.listarTodosLosAsientos();
-
-        for (Evento evento : eventoService.listarTodosLosEventos()) {
-            List<Map<String, Object>> asientosEvento = new ArrayList<>();
-            for (Asiento asiento : todosAsientos) {
-                if (asiento.getId_lugar() != evento.getId_lugar()) {
-                    continue;
-                }
-                if (!asientoDisponibleParaEvento(asiento.getId(), evento.getId(), ticketActual)) {
-                    continue;
-                }
-
-                Map<String, Object> item = new HashMap<>();
-                item.put("id", asiento.getId());
-                item.put("label", "ID " + asiento.getId() + " - " + asiento.getFila() + "-" + asiento.getNumero_asiento() + " (" + asiento.getZona() + ")");
-                asientosEvento.add(item);
-            }
-            resultado.put(evento.getId(), asientosEvento);
-        }
-
-        return resultado;
-    }
-
-    private boolean asientoDisponibleParaEvento(int idAsiento, int idEvento, Ticket ticketActual) {
-        for (Ticket existente : ticketService.listarTodosLosTickets()) {
-            if (existente.getId_evento() != idEvento || existente.getId_asiento() == null || existente.getId_asiento() != idAsiento) {
-                continue;
-            }
-
-            if (ticketActual != null && ticketActual.getId() > 0 && existente.getId() == ticketActual.getId()) {
-                return true;
-            }
-            return false;
-        }
-        return true;
     }
 
     private void asegurarCompraAsociada(Ticket ticket) {
@@ -267,6 +230,14 @@ public class TicketController {
         }
 
         Integer idUsuario = usuarioService.obtenerIdClientePorDefecto();
+        if (idUsuario == null) {
+            for (Usuario usuario : usuarioService.listarTodosLosUsuarios()) {
+                if (usuario != null && usuario.getId() > 0) {
+                    idUsuario = usuario.getId();
+                    break;
+                }
+            }
+        }
         if (idUsuario == null) {
             return;
         }
@@ -281,31 +252,6 @@ public class TicketController {
         if (compra.getId() > 0) {
             ticket.setId_compra(compra.getId());
         }
-    }
-
-    private Map<Integer, Map<String, Integer>> construirDisponiblesPorEventoTipo(Ticket ticketActual) {
-        Map<Integer, Map<String, Integer>> disponibles = new LinkedHashMap<>();
-        for (Evento evento : eventoService.listarTodosLosEventos()) {
-            Map<String, Integer> porTipo = new LinkedHashMap<>();
-            porTipo.put("general", calcularDisponiblesPorTipo(ticketActual, evento, "General"));
-            porTipo.put("vip", calcularDisponiblesPorTipo(ticketActual, evento, "VIP"));
-            porTipo.put("premium", calcularDisponiblesPorTipo(ticketActual, evento, "Premium"));
-            disponibles.put(evento.getId(), porTipo);
-        }
-        return disponibles;
-    }
-
-    private int calcularDisponiblesPorTipo(Ticket ticketActual, Evento evento, String tipoNormalizado) {
-        int vendidosTotal = ticketService.obtenerCantidadVendidaPorEvento(evento.getId());
-
-        if (ticketActual != null && ticketActual.getId() > 0) {
-            Ticket original = ticketService.obtenerTicketPorId(ticketActual.getId());
-            if (original != null && original.getId_evento() == evento.getId()) {
-                vendidosTotal = Math.max(vendidosTotal - Math.max(original.getCantidad(), 0), 0);
-            }
-        }
-
-        return Math.max(evento.getAforo_maximo() - vendidosTotal, 0);
     }
 }
 

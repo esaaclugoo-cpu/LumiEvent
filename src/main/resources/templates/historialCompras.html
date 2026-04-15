@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Historial de compras</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/styles.css}" rel="stylesheet">
+</head>
+<body>
+<header>
+    <nav class="nt-navbar" aria-label="Navegacion historial">
+        <div class="container d-flex align-items-center justify-content-between gap-3">
+            <a th:href="@{/cliente/home}" class="nt-brand" aria-label="Inicio NovaTicket">
+                <img th:src="@{/img/logo2.png}" src="/img/logo2.png" alt="NovaTicket" class="nt-logo">
+            </a>
+            <a th:href="@{/cliente/home}" class="nt-nav-link">Inicio</a>
+        </div>
+    </nav>
+</header>
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0" th:text="${esAdminHistorial} ? 'Historial global de compras' : 'Mis compras'">Mis compras</h1>
+        <a th:href="@{/cliente/home}" class="btn btn-outline-secondary">Volver a home</a>
+    </div>
+
+    <div th:if="${#lists.isEmpty(historialCompras)}" class="alert alert-info">
+        No hay compras registradas.
+    </div>
+
+    <div th:each="compra : ${historialCompras}" class="card shadow-sm mb-4">
+        <div class="card-header d-flex justify-content-between flex-wrap gap-2">
+            <span><strong>Compra #</strong><span th:text="${compra.id}"></span></span>
+            <span><strong>Usuario:</strong> <span th:text="${compra.idUsuario}"></span></span>
+            <span><strong>Fecha:</strong> <span th:text="${compra.fecha}"></span></span>
+            <span><strong>Total:</strong> <span th:text="${compra.total}"></span> EUR</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                    <thead>
+                    <tr>
+                        <th>Ticket</th>
+                        <th>Evento</th>
+                        <th>Fecha evento</th>
+                        <th>Lugar</th>
+                        <th>Tipo</th>
+                        <th>Cantidad</th>
+                        <th>Precio unitario</th>
+                        <th>Subtotal</th>
+                        <th>Asiento</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(compra.detalles)}">
+                        <td colspan="9" class="text-center">Compra sin tickets asociados.</td>
+                    </tr>
+                    <tr th:each="detalle : ${compra.detalles}">
+                        <td th:text="${detalle.idTicket}"></td>
+                        <td th:text="${detalle.nombreEvento}"></td>
+                        <td th:text="${detalle.fechaEvento}"></td>
+                        <td>
+                            <span th:text="${detalle.nombreLugar}"></span>
+                            <span th:if="${detalle.ciudadLugar != null}" th:text="' - ' + ${detalle.ciudadLugar}"></span>
+                        </td>
+                        <td th:text="${detalle.tipo}"></td>
+                        <td th:text="${detalle.cantidad}"></td>
+                        <td th:text="${detalle.precioUnitario}"></td>
+                        <td th:text="${detalle.subtotal}"></td>
+                        <td>
+                            <span th:if="${detalle.fila != null}" th:text="${detalle.fila} + '-' + ${detalle.numeroAsiento} + ' (' + ${detalle.zona} + ')'">Asignado</span>
+                            <span th:unless="${detalle.fila != null}">Sin asignar</span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+
