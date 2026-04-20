@@ -22,7 +22,6 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Listado de Lugares</h2>
         <div>
-            <a th:href="@{/admin}" class="btn btn-outline-secondary me-2">Volver a admin</a>
             <a th:href="@{/lugares/nuevo}" class="btn btn-success">Nuevo Lugar</a>
         </div>
     </div>
@@ -31,7 +30,6 @@
     <table class="table table-bordered table-striped table-hover align-middle">
         <thead>
         <tr>
-            <th>ID</th>
             <th>Nombre</th>
             <th>Direccion</th>
             <th>Ciudad</th>
@@ -40,10 +38,9 @@
         </thead>
         <tbody>
         <tr th:if="${#lists.isEmpty(lugares)}">
-            <td colspan="5" class="text-center">No hay lugares registrados.</td>
+            <td colspan="4" class="text-center">No hay lugares registrados.</td>
         </tr>
         <tr th:each="lugar : ${lugares}">
-            <td th:text="${lugar.id}"></td>
             <td th:text="${lugar.nombre}"></td>
             <td th:text="${lugar.direccion}"></td>
             <td th:text="${lugar.ciudad}"></td>

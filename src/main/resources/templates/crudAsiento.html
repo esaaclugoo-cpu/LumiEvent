@@ -22,7 +22,6 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Listado de Asientos</h2>
         <div>
-            <a th:href="@{/admin}" class="btn btn-outline-secondary me-2">Volver a admin</a>
             <a th:href="@{/asientos/nuevo}" class="btn btn-primary">Nuevo Asiento</a>
         </div>
     </div>
@@ -31,7 +30,6 @@
     <table class="table table-bordered table-striped table-hover align-middle">
         <thead class="table-dark">
         <tr>
-            <th>ID</th>
             <th>Lugar</th>
             <th>Fila</th>
             <th>Numero Asiento</th>
@@ -41,10 +39,9 @@
         </thead>
         <tbody>
         <tr th:if="${#lists.isEmpty(asientos)}">
-            <td colspan="6" class="text-center">No hay asientos registrados.</td>
+            <td colspan="5" class="text-center">No hay asientos registrados.</td>
         </tr>
         <tr th:each="asiento : ${asientos}">
-            <td th:text="${asiento.id}"></td>
             <td th:text="${lugares[asiento.id_lugar] != null ? lugares[asiento.id_lugar] : 'ID ' + asiento.id_lugar}"></td>
             <td th:text="${asiento.fila}"></td>
             <td th:text="${asiento.numero_asiento}"></td>

@@ -22,7 +22,6 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Listado de Tickets</h2>
         <div>
-            <a th:href="@{/admin}" class="btn btn-outline-secondary me-2">Volver a admin</a>
             <a th:href="@{/tickets/nuevo}" class="btn btn-success">Nuevo Ticket</a>
         </div>
     </div>
@@ -31,7 +30,6 @@
     <table class="table table-bordered table-striped table-hover align-middle">
         <thead>
         <tr>
-            <th>ID</th>
             <th>Evento</th>
             <th>Asiento</th>
             <th>Tipo</th>
@@ -43,10 +41,9 @@
         </thead>
         <tbody>
         <tr th:if="${#lists.isEmpty(tickets)}">
-            <td colspan="8" class="text-center">No hay tickets registrados.</td>
+            <td colspan="7" class="text-center">No hay tickets registrados.</td>
         </tr>
         <tr th:each="ticket : ${tickets}">
-            <td th:text="${ticket.id}"></td>
             <td th:text="${eventosMap[ticket.id_evento] != null ? eventosMap[ticket.id_evento] : 'ID ' + ticket.id_evento}"></td>
             <td th:text="${ticket.id_asiento != null ? (asientosMap[ticket.id_asiento] != null ? asientosMap[ticket.id_asiento] : 'ID ' + ticket.id_asiento) : 'Sin asiento'}"></td>
             <td th:text="${ticket.tipo}"></td>

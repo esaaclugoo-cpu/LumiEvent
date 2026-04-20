@@ -22,7 +22,6 @@
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0" th:text="${esAdminHistorial} ? 'Historial global de compras' : 'Mis compras'">Mis compras</h1>
-        <a th:href="@{/cliente/home}" class="btn btn-outline-secondary">Volver a home</a>
     </div>
 
     <div th:if="${#lists.isEmpty(historialCompras)}" class="alert alert-info">
@@ -31,8 +30,6 @@
 
     <div th:each="compra : ${historialCompras}" class="card shadow-sm mb-4">
         <div class="card-header d-flex justify-content-between flex-wrap gap-2">
-            <span><strong>Compra #</strong><span th:text="${compra.id}"></span></span>
-            <span><strong>Usuario:</strong> <span th:text="${compra.idUsuario}"></span></span>
             <span><strong>Fecha:</strong> <span th:text="${compra.fecha}"></span></span>
             <span><strong>Total:</strong> <span th:text="${compra.total}"></span> EUR</span>
         </div>

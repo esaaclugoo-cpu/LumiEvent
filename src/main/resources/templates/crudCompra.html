@@ -22,7 +22,6 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Listado de Compras</h2>
         <div>
-            <a th:href="@{/admin}" class="btn btn-outline-secondary me-2">Volver a admin</a>
             <a th:href="@{/compras/nuevo}" class="btn btn-success">Nueva Compra</a>
         </div>
     </div>
@@ -31,7 +30,6 @@
     <table class="table table-bordered table-striped table-hover align-middle">
         <thead>
         <tr>
-            <th>ID</th>
             <th>Usuario</th>
             <th>Fecha</th>
             <th>Total</th>
@@ -40,10 +38,9 @@
         </thead>
         <tbody>
         <tr th:if="${#lists.isEmpty(compras)}">
-            <td colspan="5" class="text-center">No hay compras registradas.</td>
+            <td colspan="4" class="text-center">No hay compras registradas.</td>
         </tr>
         <tr th:each="compra : ${compras}">
-            <td th:text="${compra.id}"></td>
             <td th:text="${usuariosMap[compra.id_usuario] != null ? usuariosMap[compra.id_usuario] : 'ID ' + compra.id_usuario}"></td>
             <td th:text="${compra.fecha}"></td>
             <td th:text="${compra.total}"></td>

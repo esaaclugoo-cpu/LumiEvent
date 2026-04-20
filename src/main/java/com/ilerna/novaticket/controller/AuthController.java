@@ -74,10 +74,47 @@ public class AuthController {
         return "redirect:/login?ok=Cuenta%20creada%20correctamente";
     }
 
+    @GetMapping("/cliente/perfil")
+    public String mostrarPerfil(Model model, HttpSession session) {
+        Usuario usuarioSesion = obtenerUsuarioSesion(session);
+        if (usuarioSesion == null) {
+            return "redirect:/login";
+        }
+        model.addAttribute("usuario", usuarioSesion);
+        return "perfil";
+    }
+
+    @PostMapping("/cliente/perfil/actualizar")
+    public String actualizarPerfil(@RequestParam("nombre") String nombre,
+                                   @RequestParam("email") String email,
+                                   @RequestParam("password") String password,
+                                   HttpSession session) {
+        Usuario usuarioSesion = obtenerUsuarioSesion(session);
+        if (usuarioSesion == null) {
+            return "redirect:/login";
+        }
+
+        usuarioSesion.setNombre(nombre);
+        usuarioSesion.setEmail(email);
+        if (password != null && !password.isBlank()) {
+            usuarioSesion.setPassword(password);
+        }
+
+        usuarioService.guardarUsuario(usuarioSesion);
+        session.setAttribute(USUARIO_SESION_KEY, usuarioSesion);
+
+        return "redirect:/cliente/perfil?ok=Perfil%20actualizado%20correctamente";
+    }
+
     @PostMapping("/logout")
     public String logout(HttpSession session) {
         session.invalidate();
         return "redirect:/cliente/home";
+    }
+
+    private Usuario obtenerUsuarioSesion(HttpSession session) {
+        Object usuario = session.getAttribute(USUARIO_SESION_KEY);
+        return usuario instanceof Usuario ? (Usuario) usuario : null;
     }
 }
 

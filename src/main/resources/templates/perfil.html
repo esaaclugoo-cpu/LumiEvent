@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="NovaTicket - Mi Perfil">
+    <title>NovaTicket - Mi Perfil</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/styles.css}" rel="stylesheet">
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<header>
+    <nav class="nt-navbar" aria-label="Navegación principal">
+        <div class="container d-flex align-items-center gap-3">
+            <!-- Brand -->
+            <a th:href="@{/cliente/home}" class="nt-brand me-3" aria-label="Inicio NovaTicket">
+                <img th:src="@{/img/logo2.png}" src="/img/logo2.png" alt="NovaTicket" class="nt-logo">
+            </a>
+
+            <!-- Nav links -->
+            <ul class="list-unstyled d-none d-lg-flex gap-1 mb-0">
+                <li><a th:href="@{/cliente/home}" class="nt-nav-link">Inicio</a></li>
+            </ul>
+
+            <!-- Actions -->
+            <div class="d-flex align-items-center gap-2 ms-auto">
+                <!-- Carrito -->
+                <a th:href="@{/cliente/carrito}" class="nt-nav-icon" aria-label="Carrito de compras">
+                    <i class="bi bi-cart3" aria-hidden="true"></i>
+                </a>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<!-- ===== MAIN CONTENT ===== -->
+<main class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-person-circle"></i> Mi Perfil
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Mensajes de éxito/error -->
+                    <div th:if="${param.ok}" class="alert alert-success alert-dismissible fade show" role="alert">
+                        <span th:text="${param.ok}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <span th:text="${param.error}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+
+                    <!-- Formulario de perfil -->
+                    <form th:action="@{/cliente/perfil/actualizar}" method="post" class="needs-validation" novalidate>
+                        <!-- Nombre -->
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">
+                                <i class="bi bi-person"></i> Nombre
+                            </label>
+                            <input type="text" class="form-control" id="nombre" name="nombre"
+                                   th:value="${usuario.nombre}" required>
+                            <div class="invalid-feedback">
+                                El nombre es requerido.
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="mb-3">
+                            <label for="email" class="form-label">
+                                <i class="bi bi-envelope"></i> Email
+                            </label>
+                            <input type="email" class="form-control" id="email" name="email"
+                                   th:value="${usuario.email}" required>
+                            <div class="invalid-feedback">
+                                Ingresa un email válido.
+                            </div>
+                        </div>
+
+                        <!-- Contraseña -->
+                        <div class="mb-3">
+                            <label for="password" class="form-label">
+                                <i class="bi bi-lock"></i> Nueva Contraseña
+                            </label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="password" name="password"
+                                       placeholder="Dejar en blanco para mantener la actual">
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword"
+                                        onclick="togglePasswordVisibility('password')">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted">Dejar en blanco para mantener la contraseña actual.</small>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Guardar Cambios
+                            </button>
+                            <a th:href="@{/cliente/home}" class="btn btn-outline-secondary">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Sección de Historial de Compras -->
+            <div class="card shadow mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-receipt"></i> Mi Historial de Compras
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <a th:href="@{/cliente/historial}" class="btn btn-info w-100">
+                        <i class="bi bi-clock-history"></i> Ver Historial Completo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="nt-footer">
+    <p>&copy; 2026 <strong>NovaTicket</strong> &mdash; Todos los derechos reservados</p>
+</footer>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function togglePasswordVisibility(fieldId) {
+        const field = document.getElementById(fieldId);
+        const button = document.getElementById('togglePassword');
+        if (field.type === 'password') {
+            field.type = 'text';
+            button.innerHTML = '<i class="bi bi-eye-slash"></i>';
+        } else {
+            field.type = 'password';
+            button.innerHTML = '<i class="bi bi-eye"></i>';
+        }
+    }
+</script>
+</body>
+</html>
+

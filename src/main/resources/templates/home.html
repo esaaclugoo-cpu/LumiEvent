@@ -20,14 +20,6 @@
                 <img th:src="@{/img/logo2.png}" src="/img/logo2.png" alt="NovaTicket" class="nt-logo">
             </a>
 
-            <!-- Nav links -->
-            <ul class="list-unstyled d-none d-lg-flex gap-1 mb-0">
-                <li><a th:href="@{/cliente/home}" class="nt-nav-link active">Inicio</a></li>
-                <li th:if="${usuarioSesion != null}">
-                    <a th:href="@{/cliente/historial}" class="nt-nav-link">Mis compras</a>
-                </li>
-            </ul>
-
             <!-- Search -->
             <input id="busqueda-eventos" type="search" class="nt-search ms-auto d-none d-md-block"
                    placeholder="Buscar eventos..." aria-label="Buscar eventos">
@@ -49,12 +41,38 @@
                 <a th:if="${usuarioSesion == null}" th:href="@{/login}" class="nt-nav-icon">
                     👤 Entrar
                 </a>
-                <div th:if="${usuarioSesion != null}" class="d-flex align-items-center gap-2">
-                    <span class="nt-nav-link" th:text="${usuarioSesion.nombre}">Usuario</span>
-                    <form th:action="@{/logout}" method="post" class="d-inline m-0">
-                        <button type="submit" class="btn btn-outline-danger btn-sm">Salir</button>
-                    </form>
+
+                <!-- Dropdown de usuario autenticado -->
+                <div th:if="${usuarioSesion != null}" class="dropdown">
+                    <button class="btn btn-link nt-nav-icon dropdown-toggle" type="button"
+                            id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false"
+                            style="text-decoration: none; color: inherit;">
+                        <i class="bi bi-person-circle"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><h6 class="dropdown-header" th:text="'Bienvenido, ' + ${usuarioSesion.nombre}"></h6></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/cliente/historial}">
+                                <i class="bi bi-clock-history"></i> Mis Compras
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/cliente/perfil}">
+                                <i class="bi bi-person"></i> Mi Perfil
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form th:action="@{/logout}" method="post" class="d-inline w-100">
+                                <button type="submit" class="dropdown-item text-danger">
+                                    <i class="bi bi-box-arrow-right"></i> Salir
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
                 </div>
+
                 <a th:if="${usuarioSesion == null}" th:href="@{/registro}" class="btn btn-primary btn-sm">
                     Registrarse
                 </a>

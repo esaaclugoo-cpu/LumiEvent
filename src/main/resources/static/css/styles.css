@@ -719,3 +719,53 @@ a:hover { color: var(--nt-accent-dk); }
 @media (max-width: 480px) {
     .evento-actions { flex-direction: column; }
 }
+
+/* ============================================================
+   DROPDOWN DE USUARIO
+   ============================================================ */
+.dropdown-toggle::after {
+    display: none;
+}
+
+.dropdown-menu {
+    background: var(--nt-card);
+    border: 1px solid var(--nt-border);
+    border-radius: var(--nt-radius);
+    padding: 0;
+    min-width: 200px;
+}
+
+.dropdown-menu .dropdown-header {
+    color: var(--nt-accent);
+    padding: .75rem 1rem;
+    border-bottom: 1px solid var(--nt-border);
+    font-weight: 600;
+}
+
+.dropdown-item {
+    color: var(--nt-text);
+    padding: .65rem 1rem;
+    transition: all .2s ease;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background: var(--nt-card-hover);
+    color: var(--nt-accent);
+}
+
+.dropdown-item.text-danger:hover {
+    background: rgba(239, 68, 68, .15);
+}
+
+.dropdown-divider {
+    border-color: var(--nt-border);
+    margin: .25rem 0;
+}
+
+.nt-nav-icon.dropdown-toggle {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    cursor: pointer;
+}

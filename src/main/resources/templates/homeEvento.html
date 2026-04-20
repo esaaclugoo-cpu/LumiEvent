@@ -25,7 +25,9 @@
 
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <a th:href="@{/cliente/home}" class="btn btn-link px-0">&larr; Volver al home</a>
+        <a th:href="@{/cliente/home}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Volver a Home
+        </a>
         <div class="d-flex gap-2">
             <a th:href="@{/cliente/carrito}" class="btn btn-success" aria-label="Carrito">
                 <i class="bi bi-cart3" aria-hidden="true"></i>
@@ -51,8 +53,6 @@
                     <h2 class="h4" th:text="${evento.nombre}"></h2>
                     <p class="text-muted" th:text="${evento.descripcion}"></p>
                     <p class="mb-1"><strong>Fecha:</strong> <span th:text="${evento.fecha}"></span></p>
-                    <p class="mb-1"><strong>Aforo:</strong> <span th:text="${evento.aforo_maximo}"></span></p>
-                    <p class="mb-1"><strong>Vendidos:</strong> <span th:text="${vendidos}"></span></p>
                     <p class="mb-0"><strong>Disponibles:</strong> <span th:text="${disponibles}"></span></p>
                 </div>
             </div>
@@ -101,7 +101,9 @@
                         </div>
 
                         <button id="btnAnadirCarrito" type="submit" class="btn btn-primary w-100" th:disabled="${disponibles <= 0}">Anadir al carrito</button>
-                        <a th:href="@{/cliente/home}" class="btn btn-outline-secondary w-100 mt-2">Volver a home</a>
+                        <a th:href="@{/cliente/home}" class="btn btn-outline-primary w-100 mt-2">
+                            <i class="bi bi-arrow-left"></i> Volver a Home
+                        </a>
                         <p id="sinDisponibilidad" class="text-danger mt-2 mb-0 d-none">No quedan tickets para este tipo en este evento.</p>
 
                         <div th:if="${okMensaje}" class="alert alert-success mt-3 mb-2" th:text="${okMensaje}"></div>
