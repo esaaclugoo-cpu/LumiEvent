@@ -25,7 +25,7 @@ public class EventoDAOJdbc implements EventoDAO{
             return;
         }
 
-        String sql = "INSERT INTO evento (nombre, descripcion, fecha, aforo_maximo, tipo_evento, id_lugar, nombre_lugar, direccion, ciudad, ruta_imagen) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO evento (nombre, descripcion, fecha, aforo_maximo, tipo_evento, id_lugar, ruta_imagen) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, evento.getNombre());
             pstmt.setString(2, evento.getDescripcion());
@@ -33,10 +33,7 @@ public class EventoDAOJdbc implements EventoDAO{
             pstmt.setInt(4, evento.getAforo_maximo());
             pstmt.setString(5, evento.getTipo_evento().name());
             pstmt.setInt(6, evento.getId_lugar());
-            pstmt.setString(7, evento.getNombre_lugar());
-            pstmt.setString(8, evento.getDireccion());
-            pstmt.setString(9, evento.getCiudad());
-            pstmt.setString(10, evento.getRuta_imagen());
+            pstmt.setString(7, evento.getRuta_imagen());
 
             pstmt.executeUpdate();
 
@@ -96,7 +93,7 @@ public class EventoDAOJdbc implements EventoDAO{
             return;
         }
 
-        String sql = "UPDATE evento SET nombre = ?, descripcion = ?, fecha = ?, aforo_maximo = ?, tipo_evento = ?, id_lugar = ?, nombre_lugar = ?, direccion = ?, ciudad = ?, ruta_imagen = ? WHERE id = ?";
+        String sql = "UPDATE evento SET nombre = ?, descripcion = ?, fecha = ?, aforo_maximo = ?, tipo_evento = ?, id_lugar = ?, ruta_imagen = ? WHERE id = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, evento.getNombre());
             pstmt.setString(2, evento.getDescripcion());
@@ -104,11 +101,8 @@ public class EventoDAOJdbc implements EventoDAO{
             pstmt.setInt(4, evento.getAforo_maximo());
             pstmt.setString(5, evento.getTipo_evento().name());
             pstmt.setInt(6, evento.getId_lugar());
-            pstmt.setString(7, evento.getNombre_lugar());
-            pstmt.setString(8, evento.getDireccion());
-            pstmt.setString(9, evento.getCiudad());
-            pstmt.setString(10, evento.getRuta_imagen());
-            pstmt.setInt(11, evento.getId());
+            pstmt.setString(7, evento.getRuta_imagen());
+            pstmt.setInt(8, evento.getId());
 
             int rows = pstmt.executeUpdate();
             if (rows > 0) {
@@ -314,9 +308,9 @@ public class EventoDAOJdbc implements EventoDAO{
         LocalDate fecha = rs.getDate("fecha").toLocalDate();
         int aforo_maximo = rs.getInt("aforo_maximo");
         int id_lugar = rs.getInt("id_lugar");
-        String nombre_lugar = rs.getString("nombre_lugar_fk") != null ? rs.getString("nombre_lugar_fk") : rs.getString("nombre_lugar");
-        String direccion = rs.getString("direccion_fk") != null ? rs.getString("direccion_fk") : rs.getString("direccion");
-        String ciudad = rs.getString("ciudad_fk") != null ? rs.getString("ciudad_fk") : rs.getString("ciudad");
+        String nombre_lugar = rs.getString("nombre_lugar_fk");
+        String direccion = rs.getString("direccion_fk");
+        String ciudad = rs.getString("ciudad_fk");
         String ruta_imagen = rs.getString("ruta_imagen");
         EventoEnum tipo = EventoEnum.valueOf(rs.getString("tipo_evento"));
 

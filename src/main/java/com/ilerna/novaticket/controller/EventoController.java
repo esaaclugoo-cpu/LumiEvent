@@ -105,9 +105,6 @@ public class EventoController {
         form.setAforo_maximo(evento.getAforo_maximo());
         form.setTipo_evento(evento.getTipo_evento());
         form.setId_lugar(evento.getId_lugar());
-        form.setNombre_lugar(evento.getNombre_lugar());
-        form.setDireccion(evento.getDireccion());
-        form.setCiudad(evento.getCiudad());
         form.setRuta_imagen(evento.getRuta_imagen());
 
         if (evento instanceof Concierto) {
@@ -228,9 +225,6 @@ public class EventoController {
         }
 
         evento.setId_lugar(lugar.getId());
-        evento.setNombre_lugar(lugar.getNombre());
-        evento.setDireccion(lugar.getDireccion());
-        evento.setCiudad(lugar.getCiudad());
         return true;
     }
 

@@ -6,7 +6,7 @@ public class EventoForm {
 
     private EventoEnum tipo_evento;
     private int id, id_lugar, aforo_maximo;
-    private String nombre, descripcion, nombre_lugar, direccion, ciudad, ruta_imagen;
+    private String nombre, descripcion, ruta_imagen;
     private LocalDate fecha;
 
     // Campos para Concierto
@@ -56,29 +56,6 @@ public class EventoForm {
         this.descripcion = descripcion;
     }
 
-    public String getNombre_lugar() {
-        return nombre_lugar;
-    }
-
-    public void setNombre_lugar(String nombre_lugar) {
-        this.nombre_lugar = nombre_lugar;
-    }
-
-    public String getDireccion() {
-        return direccion;
-    }
-
-    public void setDireccion(String direccion) {
-        this.direccion = direccion;
-    }
-
-    public String getCiudad() {
-        return ciudad;
-    }
-
-    public void setCiudad(String ciudad) {
-        this.ciudad = ciudad;
-    }
 
     public String getRuta_imagen() {
         return ruta_imagen;

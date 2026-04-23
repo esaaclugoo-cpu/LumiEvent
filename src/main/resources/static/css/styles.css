@@ -704,20 +704,179 @@ a:hover { color: var(--nt-accent-dk); }
 /* ============================================================
    RESPONSIVE
    ============================================================ */
+
+/* ---------- ≤992px : tablets landscape ---------- */
+@media (max-width: 992px) {
+    /* Navbar: reducir padding y tamaño logo */
+    .nt-logo { height: 36px; }
+    .nt-search { width: 170px; }
+
+    /* Carousel algo más bajo */
+    .nt-carousel .carousel-bg { height: 360px; }
+
+    /* Admin header: menos padding */
+    .admin-header { padding: 1.8rem 1rem; }
+
+    /* Sidebar filtros pasa a fila horizontal encima del grid */
+    aside.col-12.col-lg-3 {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .6rem;
+    }
+    .filter-card { flex: 1 1 180px; margin-bottom: 0; }
+
+    /* Formulario evento: max-width más holgado */
+    .form-page-card { max-width: 100%; }
+}
+
+/* ---------- ≤768px : tablets portrait / móviles grandes ---------- */
 @media (max-width: 768px) {
+    /* Ocultar buscador en navbar */
     .nt-search { display: none; }
-    .nt-carousel .carousel-bg { height: 280px; }
-    .nt-carousel .c-title { font-size: 1.4rem; }
-    .nt-carousel .carousel-content { bottom: 28px; }
-    .nt-logo { height: 34px; }
+
+    /* Carousel más compacto */
+    .nt-carousel .carousel-bg  { height: 260px; }
+    .nt-carousel .c-title      { font-size: clamp(1.1rem, 5vw, 1.7rem); }
+    .nt-carousel .c-sub        { font-size: .83rem; margin-bottom: .7rem; }
+    .nt-carousel .carousel-content { bottom: 22px; padding: 0 1rem; }
+    .nt-carousel .c-btn        { padding: .45rem 1.3rem; font-size: .8rem; }
+    .carousel-control-prev-icon,
+    .carousel-control-next-icon { width: 2rem; height: 2rem; }
+
+    /* Logo navbar más pequeño */
+    .nt-logo { height: 32px; }
+
+    /* Botón "Volver a admin" en navbar admin: posición normal en mobile */
     .nt-admin-back {
         position: static;
         transform: none;
         margin-right: auto;
+        font-size: .78rem;
     }
+
+    /* Admin panel header */
+    .admin-header { padding: 1.4rem .8rem; }
+    .admin-header h1 { font-size: 1.3rem; }
+    .nt-admin-main-logo { height: 48px; }
+
+    /* Admin cards: 2 columnas en tablet */
+    .admin-panel .row.g-4 > [class*="col-md-4"] {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+
+    /* CRUDs: padding reducido */
+    .crud-container { padding: 1rem .7rem; }
+    .crud-container h2 { font-size: 1.1rem; }
+
+    /* Tablas: texto más pequeño en mobile */
+    .table { font-size: .82rem; }
+    .table th, .table td { padding: .4rem .5rem; }
+
+    /* Auth card: más compacta */
+    .auth-card { padding: 1.6rem 1.2rem; }
+
+    /* Historial: headers de la tabla más pequeños */
+    .historial-card .card-header { font-size: .85rem; }
+
+    /* Acciones en cards de eventos */
+    .evento-actions { flex-direction: column; gap: .35rem; }
+    .btn-ver, .btn-comprar { padding: .45rem; font-size: .82rem; }
+
+    /* Footer */
+    .nt-footer { padding: 1rem; font-size: .78rem; }
+
+    /* Formularios: sección interna sin padding lateral */
+    .form-section-box { padding: .9rem .8rem; }
+
+    /* Perfil: ajustar card */
+    main.container.py-5 { padding-top: 2rem !important; padding-bottom: 2rem !important; }
 }
-@media (max-width: 480px) {
-    .evento-actions { flex-direction: column; }
+
+/* ---------- ≤576px : móviles ---------- */
+@media (max-width: 576px) {
+    /* Navbar: reducir gap y padding */
+    .nt-navbar { padding: .5rem 0; }
+    .nt-navbar .container { gap: .5rem !important; }
+    .nt-nav-icon { padding: .28rem .5rem; font-size: .78rem; }
+    .nt-cart-count { font-size: .6rem; }
+
+    /* Carousel muy compacto */
+    .nt-carousel .carousel-bg  { height: 210px; }
+    .nt-carousel .c-title      { font-size: 1.05rem; letter-spacing: 0; }
+    .nt-carousel .c-sub        { display: none; }
+    .nt-carousel .c-tag        { font-size: .65rem; }
+    .nt-carousel .carousel-content { bottom: 14px; }
+    .nt-carousel .c-btn        { padding: .35rem 1rem; font-size: .75rem; }
+
+    /* Admin cards: 1 columna */
+    .admin-panel .row.g-4 > [class*="col-md-4"] {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    /* Ocultar sidebar filtros como columna, mostrar horizontalmente compacto */
+    aside.col-12.col-lg-3 { flex-direction: column; }
+    .filter-card { flex: 1 1 100%; }
+    .filter-options { display: flex; flex-wrap: wrap; gap: .3rem; margin: .4rem 0 0; }
+    .filter-options li { margin-bottom: 0; }
+
+    /* Eventos grid: 1 columna en móvil pequeño */
+    #eventos-grid > [class*="col-"] {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    /* Tablas: scroll horizontal (ya tienen table-responsive) */
+    .table { font-size: .78rem; }
+    .table th, .table td { padding: .3rem .4rem; }
+
+    /* Botones de acción en tablas crud */
+    .crud-container .btn-sm { padding: .2rem .45rem; font-size: .74rem; }
+
+    /* Auth */
+    .auth-card { padding: 1.2rem .9rem; max-width: 100%; }
+    .auth-brand-title { font-size: 1.2rem; }
+
+    /* Carrito: precio y total compactos */
+    .container.py-4 h1.h4 { font-size: 1rem; }
+    .container.py-4 h4 { font-size: .95rem; }
+
+    /* Formularios del admin */
+    .container.mt-4 h2 { font-size: 1.1rem; }
+    .form-section-box h5 { font-size: .9rem; }
+
+    /* Botones del form en línea → apilados */
+    .container.mt-4 form > .btn,
+    .container.mt-4 form > a.btn {
+        display: block;
+        width: 100%;
+        margin-top: .5rem;
+        margin-left: 0 !important;
+    }
+
+    /* Cabecera crud: título + botón en columna */
+    .crud-container .d-flex.justify-content-between {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: .7rem;
+    }
+
+    /* Historial: ocultar columnas menos importantes */
+    .historial-table .d-none-sm { display: none; }
+
+    /* Footer */
+    .nt-footer { margin-top: 2rem; }
+}
+
+/* ---------- ≤400px : móviles pequeños ---------- */
+@media (max-width: 400px) {
+    .nt-carousel .carousel-bg  { height: 180px; }
+    .nt-logo { height: 28px; }
+    .auth-card { padding: 1rem .7rem; }
+    .admin-header h1 { font-size: 1.1rem; }
+    .crud-container h2 { font-size: 1rem; }
+    .table { font-size: .73rem; }
 }
 
 /* ============================================================

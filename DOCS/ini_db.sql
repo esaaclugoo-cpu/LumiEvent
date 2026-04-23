@@ -26,9 +26,6 @@ CREATE TABLE evento (
     aforo_maximo INT NOT NULL,
     tipo_evento ENUM('concierto','museo','teatro') NOT NULL,
     id_lugar INT NOT NULL  ,
-    nombre_lugar VARCHAR(100) NOT NULL,
-    direccion VARCHAR(255) NOT NULL,
-    ciudad VARCHAR(100) NOT NULL,
     ruta_imagen VARCHAR(255)
 
     ,FOREIGN KEY (id_lugar) REFERENCES lugar(id) ON DELETE CASCADE
