@@ -1,3 +1,41 @@
+<!--
+  Página de Historial de Compras - historialCompras.html
+  Propósito: Mostrar historial completo de compras del usuario (cliente) o todas (admin).
+  Contenido:
+    1. Cards por compra: una card por cada compra agrupada por fecha y total
+    2. Tabla de detalles: dentro de cada card, muestra tickets asociados
+    3. Información de ticket: id, evento, fecha evento, lugar, tipo, cantidad, precio unitario, subtotal, asiento
+    4. Asiento: muestra fila-número (zona) si está asignado, sino "Sin asignar"
+
+  Atributos Thymeleaf principales:
+    - th:each: compra : ${historialCompras} - itera sobre compras
+    - th:each: detalle : ${compra.detalles} - itera sobre tickets de cada compra
+    - th:text: muestra valores de compra (fecha, total) y detalle (evento, asiento, precio)
+    - th:if, th:unless: muestra "Sin asignar" si asiento es null
+    - th:classappend="${esAdminHistorial} ? 'class'": estilos condicionales (no usado en este caso)
+
+  Modelos pasados:
+    - historialCompras: List<CompraDetalle> - compras del usuario o todas si es admin
+    - compra.detalles: List<DetalleCompra> - tickets vinculados a cada compra
+    - esAdminHistorial: boolean - true si se visualiza desde panel admin (/compras)
+
+  Estructura de datos de ticket:
+    - idTicket: id del ticket
+    - nombreEvento: nombre del evento
+    - fechaEvento: fecha del evento
+    - nombreLugar, ciudadLugar: lugar donde ocurre el evento
+    - tipo: general/vip/premium
+    - cantidad: cantidad de entradas de este tipo
+    - precioUnitario: precio por entrada
+    - subtotal: cantidad * precioUnitario
+    - fila, numeroAsiento, zona: ubicación en el lugar (puede ser null si no asignado)
+
+  Flujo:
+    1. Cliente autenticado accede a /cliente/historial (CompraController.mostrarHistorialCliente)
+    2. Admin accede a /historial (CompraController.mostrarHistorial)
+    3. Se obtienen todas las compras del usuario/admin con sus detalles de tickets
+    4. Se renderiza tabla agrupada por compra
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>

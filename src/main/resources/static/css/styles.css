@@ -2,24 +2,50 @@
    NovaTicket — Tema oscuro global
    ============================================================ */
 
+/* ============================================================
+   VARIABLES CSS - Paleta de colores y constantes del tema
+   ============================================================
+   Define todas las variables reutilizables del tema oscuro.
+   Usar: var(--nt-nombreVariable) en cualquier propiedad CSS.
+   Beneficio: Cambiar colores globalmente editando solo aquí.
+   Variables: fondos, bordes, colores primarios, acentos, tipografía, efectos.
+*/
 :root {
-    --nt-bg:           #0a0e1a;
-    --nt-card:         #141a2e;
-    --nt-card-hover:   #1e2540;
-    --nt-border:       #1e2a4a;
-    --nt-primary:      #6d28d9;
-    --nt-primary-lt:   #7c3aed;
-    --nt-accent:       #f59e0b;
-    --nt-accent-dk:    #d97706;
-    --nt-text:         #e2e8f0;
-    --nt-muted:        #94a3b8;
-    --nt-success:      #10b981;
-    --nt-danger:       #ef4444;
-    --nt-shadow:       0 4px 20px rgba(0,0,0,.45);
-    --nt-radius:       12px;
+    /* Fondos oscuros */
+    --nt-bg:           #0a0e1a;    /* Fondo principal muy oscuro */
+    --nt-card:         #141a2e;    /* Fondo de cards y panels */
+    --nt-card-hover:   #1e2540;    /* Hover de cards */
+
+    /* Bordes */
+    --nt-border:       #1e2a4a;    /* Color de bordes */
+
+    /* Colores primarios (púrpura) */
+    --nt-primary:      #6d28d9;    /* Púrpura normal */
+    --nt-primary-lt:   #7c3aed;    /* Púrpura claro (hover) */
+
+    /* Acentos (naranja) */
+    --nt-accent:       #f59e0b;    /* Naranja normal */
+    --nt-accent-dk:    #d97706;    /* Naranja oscuro (hover) */
+
+    /* Tipografía */
+    --nt-text:         #e2e8f0;    /* Texto principal claro */
+    --nt-muted:        #94a3b8;    /* Texto secundario/gris */
+
+    /* Estados */
+    --nt-success:      #10b981;    /* Verde éxito */
+    --nt-danger:       #ef4444;    /* Rojo peligro */
+
+    /* Efectos */
+    --nt-shadow:       0 4px 20px rgba(0,0,0,.45);  /* Sombra estándar */
+    --nt-radius:       12px;                        /* Esquinas redondeadas */
 }
 
-/* ---- Reset ---- */
+/* ============================================================
+   RESET Y BASE - Normalización de elementos HTML
+   ============================================================
+   Establece estilos predeterminados consistentes en toda la página.
+   Aplica box-sizing, colores base, tipografía, scrollbar personalizada.
+*/
 *, *::before, *::after { box-sizing: border-box; }
 
 body {
@@ -31,7 +57,6 @@ body {
     min-height: 100vh;
 }
 
-/* Contraste tipografico global: base para todas las plantillas */
 h1, h2, h3, h4, h5, h6,
 .h1, .h2, .h3, .h4, .h5, .h6 {
     color: var(--nt-text);
@@ -41,22 +66,11 @@ p, span, li, dt, dd, strong, small, legend {
     color: inherit;
 }
 
-.text-muted {
-    color: var(--nt-muted) !important;
-}
-
-.text-secondary {
-    color: #b8c3d6 !important;
-}
-
+.text-muted { color: var(--nt-muted) !important; }
+.text-secondary { color: #b8c3d6 !important; }
 .text-dark,
-.text-black {
-    color: var(--nt-text) !important;
-}
-
-.admin-header .text-secondary {
-    color: rgba(255,255,255,.9) !important;
-}
+.text-black { color: var(--nt-text) !important; }
+.admin-header .text-secondary { color: rgba(255,255,255,.9) !important; }
 
 ::-webkit-scrollbar { width: 7px; }
 ::-webkit-scrollbar-track { background: var(--nt-bg); }
@@ -66,8 +80,14 @@ a { color: var(--nt-accent); text-decoration: none; }
 a:hover { color: var(--nt-accent-dk); }
 
 /* ============================================================
-   NAVBAR
-   ============================================================ */
+   NAVBAR - Barra de navegación fija superior
+   ============================================================
+   Componentes: Logo, links, buscador, carrito, usuario autenticado.
+   Comportamiento: Sticky (fijo al scroll), semi-transparente con blur.
+   Responsivo: Logo se empequeñece en móvil, buscador se oculta.
+   Elementos: .nt-navbar, .nt-brand, .nt-logo, .nt-nav-link, .nt-search,
+             .nt-nav-icon, .nt-cart-count.
+*/
 .nt-navbar {
     position: sticky;
     top: 0;
@@ -111,6 +131,7 @@ a:hover { color: var(--nt-accent-dk); }
 .nt-nav-link:hover, .nt-nav-link.active { color: #fff; background: rgba(109,40,217,.2); }
 
 .nt-search {
+    /* Buscador principal del home; en móvil se oculta por media query. */
     background: var(--nt-card);
     border: 1px solid var(--nt-border);
     border-radius: 25px;
@@ -150,8 +171,13 @@ a:hover { color: var(--nt-accent-dk); }
 }
 
 /* ============================================================
-   HERO CAROUSEL
-   ============================================================ */
+   HERO CAROUSEL - Carrusel de eventos destacados en home
+   ============================================================
+   Propósito: Mostrar rotación de eventos principales con imágenes de fondo.
+   Componentes: Fondo con overlay gradient, título, descripción, botón, indicadores, controles.
+   Animación: Rotación automática cada 4.5 segundos, zoom de imagen en hover.
+   Responsivo: Altura se ajusta con media queries en mobile/tablet.
+*/
 .nt-carousel .carousel-bg {
     height: 430px;
     background-size: cover;
@@ -160,6 +186,7 @@ a:hover { color: var(--nt-accent-dk); }
     position: relative;
 }
 .nt-carousel .carousel-bg::after {
+    /* Superposición para mejorar contraste del texto sobre imágenes variables. */
     content: '';
     position: absolute;
     inset: 0;
@@ -263,8 +290,13 @@ a:hover { color: var(--nt-accent-dk); }
 .carousel-indicators [data-bs-target].active { opacity: 1; }
 
 /* ============================================================
-   FILTER SIDEBAR
-   ============================================================ */
+   FILTER SIDEBAR - Panel lateral/offcanvas de filtros
+   ============================================================
+   Propósito: Filtrar eventos por categoría (concierto/teatro/museo) y disponibilidad.
+   Desktop: Sidebar fijo en columna izquierda.
+   Móvil: Se convierte en offcanvas (panel deslizante) activado por botón hamburguesa.
+   Elementos: Tarjetas de filtro, radio buttons, toggle buttons, offcanvas adaptado.
+*/
 .filter-card {
     background: var(--nt-card);
     border: 1px solid var(--nt-border);
@@ -272,6 +304,39 @@ a:hover { color: var(--nt-accent-dk); }
     padding: 1.1rem 1.2rem;
     margin-bottom: .85rem;
 }
+.nt-filter-toggle {
+    /* Botón hamburguesa de filtros visible en home móvil. */
+    justify-content: center;
+    min-width: 42px;
+}
+
+.nt-filter-toggle i {
+    font-size: 1.15rem;
+}
+
+.nt-filters-offcanvas {
+    /* Panel lateral de filtros en móvil/tablet (offcanvas de Bootstrap). */
+    --bs-offcanvas-width: min(320px, 88vw);
+}
+
+.nt-filters-body {
+    padding: 0;
+}
+
+.nt-filters-offcanvas .offcanvas-header {
+    background: var(--nt-card);
+    border-bottom: 1px solid var(--nt-border);
+}
+
+.nt-filters-offcanvas .offcanvas-title {
+    color: var(--nt-text);
+    font-weight: 800;
+}
+
+.nt-filters-offcanvas .btn-close {
+    opacity: .9;
+}
+
 .filter-toggle-btn {
     font-size: .88rem;
     font-weight: 700;
@@ -296,10 +361,17 @@ a:hover { color: var(--nt-accent-dk); }
 }
 .filter-options label:hover { color: var(--nt-text); }
 .filter-options input[type="radio"] { accent-color: var(--nt-primary); }
+/* Los radios comparten name en desktop y móvil para mantener un único estado de filtro. */
 
 /* ============================================================
-   EVENT CARDS
-   ============================================================ */
+   EVENT CARDS - Grid de cards de eventos en home
+   ============================================================
+   Propósito: Mostrar eventos en un grid responsivo con información visual.
+   Características: Imagen con zoom, badges (fecha, agotado), tipo evento,
+                   ubicación, disponibilidad, botones de acción (Ver/Comprar).
+   Efectos: Elevación en hover, zoom de imagen, sombra dinámica.
+   Datos: Usa data-tipo y data-disp para filtrado con JavaScript.
+*/
 .evento-card {
     background: var(--nt-card);
     border: 1px solid var(--nt-border);
@@ -405,14 +477,20 @@ a:hover { color: var(--nt-accent-dk); }
 .btn-comprar.disabled { background: #2d2d5e; border-color: #2d2d5e; pointer-events: none; }
 
 /* ============================================================
-   SECTION HEADERS
-   ============================================================ */
+   SECTION HEADERS - Títulos de secciones principales
+   ============================================================
+   Propósito: Encabezados consistentes para secciones de contenido.
+   Estilo: Tipografía grande, color claro, acento en palabras clave.
+*/
 .section-title { font-weight: 800; font-size: 1.35rem; color: var(--nt-text); margin-bottom: 1.2rem; }
 .section-title span { color: var(--nt-accent); }
 
 /* ============================================================
-   BOOTSTRAP OVERRIDES
-   ============================================================ */
+   BOOTSTRAP OVERRIDES - Personalización de componentes Bootstrap
+   ============================================================
+   Propósito: Adaptar componentes Bootstrap al tema oscuro.
+   Incluye: Alertas, formularios, botones, tarjetas, tablas.
+*/
 .alert { border: none; border-radius: 10px; }
 .alert-danger  { background: rgba(239,68,68,.15);  color: #fca5a5; }
 .alert-success { background: rgba(16,185,129,.15); color: #6ee7b7; }
@@ -445,28 +523,10 @@ a:hover { color: var(--nt-accent-dk); }
 .table-striped > tbody > tr:nth-of-type(odd) > * { background: rgba(255,255,255,.025); color: var(--nt-text); }
 .table-hover > tbody > tr:hover > * { background: rgba(109,40,217,.1); color: var(--nt-text); }
 .table-bordered { border-color: var(--nt-border); }
-
-.table {
-    --bs-table-bg: var(--nt-card);
-    --bs-table-color: var(--nt-text);
-    --bs-table-border-color: var(--nt-border);
-    --bs-table-striped-bg: rgba(255,255,255,.035);
-    --bs-table-striped-color: var(--nt-text);
-    --bs-table-hover-bg: rgba(109,40,217,.12);
-    --bs-table-hover-color: var(--nt-text);
-}
-
-.table > :not(caption) > * > * {
-    border-bottom-color: var(--nt-border) !important;
-}
-
-.table td {
-    color: var(--nt-text);
-}
-
-.table td .text-muted {
-    color: #b5c0d2 !important;
-}
+.table { --bs-table-bg: var(--nt-card); --bs-table-color: var(--nt-text); --bs-table-border-color: var(--nt-border); --bs-table-striped-bg: rgba(255,255,255,.035); --bs-table-striped-color: var(--nt-text); --bs-table-hover-bg: rgba(109,40,217,.12); --bs-table-hover-color: var(--nt-text); }
+.table > :not(caption) > * > * { border-bottom-color: var(--nt-border) !important; }
+.table td { color: var(--nt-text); }
+.table td .text-muted { color: #b5c0d2 !important; }
 
 .btn-primary { background: var(--nt-primary); border-color: var(--nt-primary); }
 .btn-primary:hover { background: var(--nt-primary-lt); border-color: var(--nt-primary-lt); }
@@ -482,33 +542,20 @@ a:hover { color: var(--nt-accent-dk); }
 .btn-secondary:hover { background: #475569; border-color: #475569; color: #fff; }
 .btn-dark { background: #0f172a; border-color: #334155; color: #e2e8f0; }
 .btn-dark:hover { background: #1e293b; border-color: #475569; color: #fff; }
-
-.btn-outline-primary,
-.btn-outline-success,
-.btn-outline-warning,
-.btn-outline-info,
-.btn-outline-dark {
-    color: var(--nt-text);
-    border-color: var(--nt-border);
-}
-
-.btn-outline-primary:hover,
-.btn-outline-success:hover,
-.btn-outline-warning:hover,
-.btn-outline-info:hover,
-.btn-outline-dark:hover {
-    color: #fff;
-    border-color: var(--nt-primary);
-    background: rgba(109,40,217,.25);
-}
+.btn-outline-primary, .btn-outline-success, .btn-outline-warning, .btn-outline-info, .btn-outline-dark { color: var(--nt-text); border-color: var(--nt-border); }
+.btn-outline-primary:hover, .btn-outline-success:hover, .btn-outline-warning:hover, .btn-outline-info:hover, .btn-outline-dark:hover { color: #fff; border-color: var(--nt-primary); background: rgba(109,40,217,.25); }
 .btn-link { color: var(--nt-accent); }
 .btn-link:hover { color: var(--nt-accent-dk); }
 .badge.bg-secondary { background: #2d2d5e !important; }
 .input-group-text { background: var(--nt-card); border-color: var(--nt-border); color: var(--nt-muted); }
 
 /* ============================================================
-   AUTH PAGES
-   ============================================================ */
+   AUTH PAGES - Estilos para páginas de autenticación (login/registro)
+   ============================================================
+   Propósito: Diseño consistente para formularios de login y registro.
+   Características: Card centrada, inputs blancos (contraste), validación.
+   Ubicación: /login, /registro
+*/
 .auth-wrapper {
     min-height: 100vh;
     display: flex; align-items: center; justify-content: center;
@@ -548,8 +595,12 @@ a:hover { color: var(--nt-accent-dk); }
 }
 
 /* ============================================================
-   ADMIN PANEL
-   ============================================================ */
+   ADMIN PANEL - Dashboard y componentes administrativos
+   ============================================================
+   Propósito: Estilos exclusivos del panel de administración.
+   Componentes: Header con gradiente, cards de acceso rápido, botones admin.
+   Ubicación: /admin, /eventos, /usuarios, /compras, etc.
+*/
 .admin-header {
     background: linear-gradient(135deg, #0d0d2b 0%, var(--nt-primary) 100%);
     border-radius: var(--nt-radius);
@@ -658,8 +709,12 @@ a:hover { color: var(--nt-accent-dk); }
 }
 
 /* ============================================================
-   CRUD / FORM PAGES
-   ============================================================ */
+   CRUD / FORM PAGES - Formularios y tablas administrativas
+   ============================================================
+   Propósito: Estilos para páginas de CRUD y formularios de gestión.
+   Componentes: Contenedor CRUD, tarjetas de formulario, secciones internas, legends.
+   Ubicación: Todas las páginas de administración con formularios.
+*/
 .crud-container {
     background: var(--nt-card);
     border: 1px solid var(--nt-border);
@@ -683,13 +738,20 @@ a:hover { color: var(--nt-accent-dk); }
 .form-section-box legend { font-size: .82rem; font-weight: 700; color: var(--nt-accent); padding: 0 .4rem; }
 
 /* ============================================================
-   HISTORIAL COMPRAS
-   ============================================================ */
+   HISTORIAL COMPRAS - Página de historial de compras del usuario
+   ============================================================
+   Propósito: Mostrar historial con cards agrupadas por compra.
+   Componentes: Card-header con fondo púrpura, tablas de detalles de tickets.
+   Ubicación: /cliente/historial, /historial (admin)
+*/
 .historial-card .card-header { background: var(--nt-primary) !important; color: #fff; font-weight: 600; }
 
 /* ============================================================
-   FOOTER
-   ============================================================ */
+   FOOTER - Pie de página
+   ============================================================
+   Propósito: Información y links al pie del sitio.
+   Ubicación: Abajo de todas las páginas.
+*/
 .nt-footer {
     background: var(--nt-card);
     border-top: 1px solid var(--nt-border);
@@ -702,8 +764,57 @@ a:hover { color: var(--nt-accent-dk); }
 .nt-footer a { color: var(--nt-accent); }
 
 /* ============================================================
-   RESPONSIVE
-   ============================================================ */
+   DROPDOWN DE USUARIO - Menú desplegable del usuario autenticado
+   ============================================================
+   Propósito: Mostrar opciones del usuario autenticado (perfil, historial, logout).
+   Ubicación: Navbar derecha, junto al icono de usuario/carrito.
+*/
+.dropdown-toggle::after {
+    display: none;
+}
+
+.dropdown-menu {
+    background: var(--nt-card);
+    border: 1px solid var(--nt-border);
+    border-radius: var(--nt-radius);
+    padding: 0;
+    min-width: 200px;
+}
+
+.dropdown-menu .dropdown-header {
+    color: var(--nt-accent);
+    padding: .75rem 1rem;
+    border-bottom: 1px solid var(--nt-border);
+    font-weight: 600;
+}
+
+.dropdown-item {
+    color: var(--nt-text);
+    padding: .65rem 1rem;
+    transition: all .2s ease;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background: var(--nt-card-hover);
+    color: var(--nt-accent);
+}
+
+.dropdown-item.text-danger:hover {
+    background: rgba(239, 68, 68, .15);
+}
+
+.dropdown-divider {
+    border-color: var(--nt-border);
+    margin: .25rem 0;
+}
+
+.nt-nav-icon.dropdown-toggle {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    cursor: pointer;
+}
 
 /* ---------- ≤992px : tablets landscape ---------- */
 @media (max-width: 992px) {
@@ -717,16 +828,43 @@ a:hover { color: var(--nt-accent-dk); }
     /* Admin header: menos padding */
     .admin-header { padding: 1.8rem 1rem; }
 
-    /* Sidebar filtros pasa a fila horizontal encima del grid */
-    aside.col-12.col-lg-3 {
-        display: flex;
-        flex-wrap: wrap;
-        gap: .6rem;
+    /* Filtros convertidos en panel lateral en tablet y móvil */
+    .nt-filters-offcanvas {
+        /* En tamaños medianos los filtros pasan a panel lateral deslizante. */
+        background: var(--nt-bg);
+        border-left: 1px solid var(--nt-border);
     }
-    .filter-card { flex: 1 1 180px; margin-bottom: 0; }
+
+    .nt-filters-body {
+        padding: 1rem;
+    }
+
+    .nt-filters-body .filter-card:last-child {
+        margin-bottom: 0;
+    }
 
     /* Formulario evento: max-width más holgado */
     .form-page-card { max-width: 100%; }
+}
+
+@media (min-width: 992px) {
+    .nt-filters-offcanvas {
+        /* En escritorio se desactiva el comportamiento offcanvas y vuelve a sidebar normal. */
+        position: static;
+        transform: none;
+        visibility: visible;
+        background: transparent;
+        border: 0;
+        color: inherit;
+        width: auto;
+        height: auto;
+    }
+
+    .nt-filters-offcanvas .offcanvas-body {
+        display: block;
+        padding: 0;
+        overflow: visible;
+    }
 }
 
 /* ---------- ≤768px : tablets portrait / móviles grandes ---------- */
@@ -783,6 +921,11 @@ a:hover { color: var(--nt-accent-dk); }
     .evento-actions { flex-direction: column; gap: .35rem; }
     .btn-ver, .btn-comprar { padding: .45rem; font-size: .82rem; }
 
+    /* Header del home con botón de filtros accesible */
+    .nt-filter-toggle {
+        padding: .35rem .6rem;
+    }
+
     /* Footer */
     .nt-footer { padding: 1rem; font-size: .78rem; }
 
@@ -800,6 +943,7 @@ a:hover { color: var(--nt-accent-dk); }
     .nt-navbar .container { gap: .5rem !important; }
     .nt-nav-icon { padding: .28rem .5rem; font-size: .78rem; }
     .nt-cart-count { font-size: .6rem; }
+    .nt-filter-toggle { min-width: 40px; }
 
     /* Carousel muy compacto */
     .nt-carousel .carousel-bg  { height: 210px; }
@@ -815,11 +959,24 @@ a:hover { color: var(--nt-accent-dk); }
         max-width: 100%;
     }
 
-    /* Ocultar sidebar filtros como columna, mostrar horizontalmente compacto */
-    aside.col-12.col-lg-3 { flex-direction: column; }
-    .filter-card { flex: 1 1 100%; }
-    .filter-options { display: flex; flex-wrap: wrap; gap: .3rem; margin: .4rem 0 0; }
-    .filter-options li { margin-bottom: 0; }
+    /* Ajustes finos del panel de filtros en móvil */
+    .nt-filters-offcanvas {
+        /* Reduce ancho del panel en pantallas estrechas para no tapar toda la vista. */
+        --bs-offcanvas-width: min(300px, 92vw);
+    }
+
+    .nt-filters-body {
+        padding: .9rem;
+    }
+
+    .filter-options {
+        display: block;
+        margin: .55rem 0 0;
+    }
+
+    .filter-options li {
+        margin-bottom: .45rem;
+    }
 
     /* Eventos grid: 1 columna en móvil pequeño */
     #eventos-grid > [class*="col-"] {

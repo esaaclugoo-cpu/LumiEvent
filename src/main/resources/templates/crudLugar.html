@@ -1,3 +1,29 @@
+<!--
+  Listado de Lugares - crudLugar.html
+  Propósito: Mostrar tabla CRUD de todos los lugares registrados (venues para eventos).
+  Contenido: Tabla con columnas:
+    1. Nombre: nombre del lugar (ej: Auditorio Nacional)
+    2. Dirección: dirección física
+    3. Ciudad: ciudad donde se ubica
+    4. Acciones: botones Editar y Eliminar
+
+  Atributos Thymeleaf principales:
+    - th:each: lugar : ${lugares} - itera sobre lista de lugares
+    - th:text: muestra valores de lugar
+    - th:href: rutas dinámicas a editar (/lugares/editar/{id}) y eliminar
+
+  Modelos pasados:
+    - lugares: List<Lugar> - todos los lugares
+
+  Acciones:
+    - Nuevo lugar: botón verde que lleva a /lugares/nuevo
+    - Editar: GET a /lugares/editar/{id} carga formulario con datos
+    - Eliminar: GET a /lugares/eliminar/{id} elimina lugar y redirecciona
+
+  Dependencias: Los lugares no pueden eliminarse si tienen eventos asociados (foreign key).
+
+  Relaciones: Lugar -> tiene muchos asientos -> están en eventos
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>
@@ -29,6 +55,9 @@
             <a th:href="@{/lugares/nuevo}" class="btn btn-success">Nuevo Lugar</a>
         </div>
     </div>
+
+    <div th:if="${okMensaje}" class="alert alert-success" th:text="${okMensaje}"></div>
+    <div th:if="${errorMensaje}" class="alert alert-danger" th:text="${errorMensaje}"></div>
 
     <div class="table-responsive">
     <table class="table table-bordered table-striped table-hover align-middle">

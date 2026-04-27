@@ -1,3 +1,31 @@
+<!--
+  Listado de Compras - crudCompra.html
+  Propósito: Mostrar tabla CRUD de todas las compras registradas en el sistema.
+  Contenido: Tabla con columnas:
+    1. Usuario: nombre del usuario que realizó la compra (traducción desde ID)
+    2. Fecha: fecha y hora de la compra
+    3. Total: monto total de la compra
+    4. Acciones: botones Editar y Eliminar
+
+  Atributos Thymeleaf principales:
+    - th:each: compra : ${compras} - itera sobre lista de compras
+    - th:text: muestra valores de compra
+    - usuariosMap[compra.id_usuario]: Map que traduce ID de usuario a nombre
+    - th:href: rutas dinámicas a editar (/compras/editar/{id}) y eliminar
+
+  Modelos pasados:
+    - compras: List<Compra> - todas las compras
+    - usuariosMap: Map<Integer, String> - mapeo id_usuario -> nombre usuario
+
+  Acciones:
+    - Nueva compra: botón verde que lleva a /compras/nuevo
+    - Editar: GET a /compras/editar/{id} carga formulario
+    - Eliminar: GET a /compras/eliminar/{id} elimina compra y redirecciona
+
+  Relaciones: Compra <- tiene muchos tickets (ON DELETE CASCADE)
+
+  Importancia: Las compras son el registro de transacciones. Cada compra vincula usuario + tickets.
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>
@@ -29,6 +57,9 @@
             <a th:href="@{/compras/nuevo}" class="btn btn-success">Nueva Compra</a>
         </div>
     </div>
+
+    <div th:if="${okMensaje}" class="alert alert-success" th:text="${okMensaje}"></div>
+    <div th:if="${errorMensaje}" class="alert alert-danger" th:text="${errorMensaje}"></div>
 
     <div class="table-responsive">
     <table class="table table-bordered table-striped table-hover align-middle">

@@ -1,3 +1,43 @@
+<!--
+  Formulario de Ticket - formTicket.html
+  Propósito: Crear o editar tickets vinculados a eventos. En creación, permite alta masiva.
+  Contenido del formulario:
+    1. Evento: selector desplegable con todos los eventos
+    2. Hidden fields: id_asiento e id_compra (se rellenan automáticamente o por admin)
+    3. Bloque masivo cantidad: 3 inputs para cantidad (general/vip/premium)
+    4. Bloque masivo precio: 3 inputs para precio unitario (general/vip/premium)
+
+  Atributos Thymeleaf principales:
+    - th:object="${ticket}": vincula objeto ticket del modelo
+    - th:field: vincula atributos del objeto a inputs
+    - th:each: evento : ${eventos} - itera para llenar selector
+    - th:text: muestra encabezado dinámico (Agregar vs Editar)
+
+  Modelos pasados:
+    - ticket: Ticket - objeto con id, id_evento, id_asiento, id_compra, tipo, cantidad, precio_unitario
+    - ticket.id: 0 si es nuevo, > 0 si es edición
+    - eventos: List<Evento> - para llenar selector
+
+  Procesamiento:
+    - POST a /tickets/guardar (para ambas operaciones)
+    - En creación: cantidadGeneral, cantidadVip, cantidadPremium son campos name adicionales
+    - En creación: precioGeneral, precioVip, precioPremium son campos name adicionales
+
+  Validación en backend:
+    - Evento obligatorio y válido
+    - En creación: se crean tantos tickets como suma de cantidades
+    - Cantidades y precios no pueden ser negativos
+
+  Flujo:
+    1. Crear: GET /tickets/nuevo muestra formulario con selector evento
+    2. Editar: GET /tickets/editar/{id} carga ticket en formulario (raramente usado)
+    3. Guardar: POST /tickets/guardar procesa ambos casos
+
+  Nota: Los tickets se crean principalmente al pagar carrito (flow automático),
+        este formulario es para administración/correcciones manuales.
+
+  Precios por defecto: General 25.00, VIP 50.00, Premium 80.00 EUR
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>

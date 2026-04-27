@@ -1,3 +1,13 @@
+<!--
+  Panel de Administración Principal - index.html
+  Propósito: Punto de entrada del panel admin con acceso a todos los módulos CRUD.
+  Contenido: 6 tarjetas con enlaces a gestión de Eventos, Asientos, Compras, Lugares, Usuarios y Tickets.
+  Atributos Thymeleaf usados:
+    - th:href: rutas dinámicas a cada módulo CRUD (/eventos, /asientos, etc.)
+    - th:text: muestra la hora actual del sistema en formato HH:mm:ss
+  Flujo: Solo accesible para usuarios con rol ADMIN tras autenticarse.
+  Estructura: Header vacío, main con grid de 6 cards Bootstrap para cada entidad.
+-->
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>

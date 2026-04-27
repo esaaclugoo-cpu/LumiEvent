@@ -14,14 +14,22 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Implementación JDBC del repositorio de usuarios.
+ * Accede directamente a la tabla usuario de MySQL usando la conexión Singleton de Conexion.
+ */
 @Repository
 @Qualifier("usuarioDAOJdbc")
 public class UsuarioDAOJdbc implements UsuarioDAO {
 
+    /** Obtiene la conexión activa desde el Singleton Conexion. */
     private Connection getConnection() {
         return Conexion.getInstancia().getConnection();
     }
 
+    /**
+     * Inserta un nuevo usuario en la base de datos y actualiza el id generado en el objeto.
+     */
     @Override
     public void guardar(Usuario usuario) {
         Connection conn = getConnection();
@@ -49,6 +57,9 @@ public class UsuarioDAOJdbc implements UsuarioDAO {
         }
     }
 
+    /**
+     * Actualiza nombre, email, contraseña y tipo_usuario de un usuario existente por su id.
+     */
     @Override
     public void actualizar(Usuario usuario) {
         Connection conn = getConnection();
@@ -69,6 +80,11 @@ public class UsuarioDAOJdbc implements UsuarioDAO {
         }
     }
 
+    /**
+     * Elimina el usuario con el id indicado.
+     * Antes elimina sus compras asociadas en la misma transacción
+     * (los tickets de esas compras se eliminan por cascada en BD).
+     */
     @Override
     public void eliminar(int id) {
         Connection conn = getConnection();
@@ -76,15 +92,43 @@ public class UsuarioDAOJdbc implements UsuarioDAO {
             return;
         }
 
-        String sql = "DELETE FROM usuario WHERE id = ?";
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, id);
-            pstmt.executeUpdate();
+        String sqlEliminarCompras = "DELETE FROM compra WHERE id_usuario = ?";
+        String sqlEliminarUsuario = "DELETE FROM usuario WHERE id = ?";
+
+        boolean autoCommitAnterior = true;
+        try {
+            autoCommitAnterior = conn.getAutoCommit();
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement pstmtCompras = conn.prepareStatement(sqlEliminarCompras);
+                 PreparedStatement pstmtUsuario = conn.prepareStatement(sqlEliminarUsuario)) {
+                // Primero borra compras del usuario; ticket se borra por ON DELETE CASCADE en compra
+                pstmtCompras.setInt(1, id);
+                pstmtCompras.executeUpdate();
+
+                // Luego borra el usuario
+                pstmtUsuario.setInt(1, id);
+                pstmtUsuario.executeUpdate();
+            }
+
+            conn.commit();
         } catch (SQLException e) {
-            e.printStackTrace();
+            try {
+                conn.rollback();
+            } catch (SQLException ignored) {
+            }
+            throw new RuntimeException("No se pudo eliminar el usuario con id " + id, e);
+        } finally {
+            try {
+                conn.setAutoCommit(autoCommitAnterior);
+            } catch (SQLException ignored) {
+            }
         }
     }
 
+    /**
+     * Obtiene un usuario por su id. Devuelve null si no existe o hay error de conexión.
+     */
     @Override
     public Usuario obtenerPorId(int id) {
         Connection conn = getConnection();
@@ -106,6 +150,11 @@ public class UsuarioDAOJdbc implements UsuarioDAO {
         return null;
     }
 
+    /**
+     * Obtiene un usuario buscando por email de forma insensible a mayúsculas.
+     * Devuelve null si no existe, el email es nulo/vacío o hay error de conexión.
+     * Se usa en el proceso de autenticación y validación de registro duplicado.
+     */
     @Override
     public Usuario obtenerPorEmail(String email) {
         Connection conn = getConnection();
@@ -127,6 +176,9 @@ public class UsuarioDAOJdbc implements UsuarioDAO {
         return null;
     }
 
+    /**
+     * Devuelve la lista completa de usuarios ordenada por nombre.
+     */
     @Override
     public List<Usuario> listarTodos() {
         Connection conn = getConnection();
@@ -148,6 +200,10 @@ public class UsuarioDAOJdbc implements UsuarioDAO {
         return usuarios;
     }
 
+    /**
+     * Mapea una fila del ResultSet al objeto Usuario correspondiente.
+     * Convierte el campo tipo_usuario de String a UsuarioEnum.
+     */
     private Usuario mapearUsuario(ResultSet rs) throws SQLException {
         Usuario usuario = new Usuario();
         usuario.setId(rs.getInt("id"));

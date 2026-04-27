@@ -17,31 +17,50 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.time.LocalDate;
 
+/**
+ * Controlador CRUD de eventos del panel de administración.
+ * Gestiona el listado, creación, edición y eliminación de eventos.
+ * Soporta tres subtipos de evento mediante herencia: Concierto, Teatro y Museo.
+ */
 @Controller
 public class EventoController {
 
     private final EventoService eventoService;
     private final LugarService lugarService;
 
+    /**
+     * Constructor con inyección de los servicios de eventos y lugares.
+     */
     @Autowired
     public EventoController(EventoService eventoService, LugarService lugarService) {
         this.eventoService = eventoService;
         this.lugarService = lugarService;
     }
 
+    /**
+     * Muestra el panel de administración principal.
+     */
     @GetMapping("/admin")
     public String mostrarAdmin() {
         return "admin";
     }
 
+    /**
+     * Lista todos los eventos con sus datos de lugar obtenidos mediante JOIN.
+     */
     @GetMapping("/eventos")
     public String listarEvento(Model model) {
         model.addAttribute("eventos", eventoService.listarTodosLosEventos());
         return "crudEvento";
     }
 
+    /**
+     * Muestra el formulario vacío para crear un nuevo evento.
+     * Carga la lista de lugares registrados para el selector del formulario.
+     */
     @GetMapping("/eventos/nuevo")
     public String mostrarFormulario(Model model) {
         model.addAttribute("evento", new EventoForm());
@@ -49,6 +68,11 @@ public class EventoController {
         return "formEvento";
     }
 
+    /**
+     * Procesa el formulario de creación de un evento.
+     * Valida la fecha, guarda la imagen si se sube una, construye el subtipo correcto
+     * y verifica que el lugar seleccionado exista antes de persistir.
+     */
     @PostMapping("/eventos/guardar")
     public String guardarEvento(@ModelAttribute EventoForm eventoForm,
                                 @RequestParam(value = "imagenFile", required = false) MultipartFile imagenFile,
@@ -90,6 +114,10 @@ public class EventoController {
         return "redirect:/eventos";
     }
 
+    /**
+     * Muestra el formulario de edición precargado con los datos del evento existente.
+     * Rellena los campos específicos del subtipo (Concierto, Teatro o Museo).
+     */
     @GetMapping("/eventos/editar/{id}")
     public String mostrarFormularioEditar(@PathVariable int id, Model model) {
         Evento evento = eventoService.obtenerEventoPorId(id);
@@ -128,6 +156,10 @@ public class EventoController {
         return "formEvento";
     }
 
+    /**
+     * Procesa la actualización de un evento existente.
+     * Mantiene la imagen anterior si no se sube una nueva, actualiza el subtipo y el lugar.
+     */
     @PostMapping("/eventos/actualizar")
     public String actualizarEvento(@ModelAttribute EventoForm eventoForm,
                                    @RequestParam(value = "imagenFile", required = false) MultipartFile imagenFile,
@@ -168,12 +200,26 @@ public class EventoController {
         return "redirect:/eventos";
     }
 
+    /**
+     * Elimina el evento con el id indicado (incluyendo su imagen del disco) y redirige al listado.
+     */
     @GetMapping("/eventos/eliminar/{id}")
-    public String eliminarEvento(@PathVariable int id) {
-        eventoService.eliminarEvento(id);
+    public String eliminarEvento(@PathVariable int id, RedirectAttributes redirectAttributes) {
+        try {
+            eventoService.eliminarEvento(id);
+            redirectAttributes.addFlashAttribute("okMensaje", "Evento eliminado correctamente.");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("errorMensaje", "No se pudo eliminar el evento. Puede tener datos relacionados.");
+        }
         return "redirect:/eventos";
     }
 
+    /**
+     * Crea la instancia concreta de Evento (Concierto, Teatro o Museo) a partir del formulario.
+     * Rellena los atributos comunes y los específicos del subtipo seleccionado.
+     *
+     * @return El objeto Evento listo para persistir, o null si el tipo no es válido.
+     */
     private Evento construirEventoDesdeFormulario(EventoForm eventoForm) {
         Evento evento = null;
 
@@ -215,6 +261,10 @@ public class EventoController {
         return evento;
     }
 
+    /**
+     * Busca el lugar por id, lo asigna al evento y devuelve false si no se encuentra.
+     * En caso de error añade el mensaje al modelo y recarga la lista de lugares.
+     */
     private boolean aplicarLugarSeleccionado(int idLugar, Evento evento, Model model, EventoForm eventoForm) {
         Lugar lugar = lugarService.obtenerLugarPorId(idLugar);
         if (lugar == null) {

@@ -17,15 +17,20 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.List;
 
+/**
+ * Controlador CRUD de tickets del panel de administración.
+ * Gestiona la creación masiva de tickets por tipo (General, VIP, Premium),
+ * la edición individual y la eliminación.
+ * Al crear tickets nuevos genera automáticamente una compra base si no se indica ninguna.
+ */
 @Controller
 public class TicketController {
 
@@ -35,6 +40,9 @@ public class TicketController {
     private final AsientoService asientoService;
     private final UsuarioService usuarioService;
 
+    /**
+     * Constructor con inyección de los servicios necesarios para gestionar tickets.
+     */
     public TicketController(TicketService ticketService,
                             EventoService eventoService,
                             CompraService compraService,
@@ -47,6 +55,10 @@ public class TicketController {
         this.usuarioService = usuarioService;
     }
 
+    /**
+     * Lista todos los tickets con mapas auxiliares para mostrar
+     * nombres de evento, compra y asiento en lugar de IDs.
+     */
     @GetMapping("/tickets")
     public String listarTickets(Model model) {
         List<Ticket> tickets = ticketService.listarTodosLosTickets();
@@ -76,12 +88,21 @@ public class TicketController {
         return "crudTicket";
     }
 
+    /**
+     * Muestra el formulario vacío para crear nuevos tickets.
+     * Carga los datos de eventos necesarios para el selector.
+     */
     @GetMapping("/tickets/nuevo")
     public String mostrarFormulario(Model model) {
         cargarDatosFormulario(model, new Ticket());
         return "formTicket";
     }
 
+    /**
+     * Procesa el formulario de creación de tickets.
+     * Valida evento, precios, cantidades y compatibilidad asiento-evento.
+     * Si es una creación nueva, genera una compra base y crea un ticket por cada unidad indicada.
+     */
     @PostMapping("/tickets/guardar")
     public String guardarTicket(@ModelAttribute Ticket ticket,
                                 @RequestParam(value = "cantidadGeneral", defaultValue = "0") int cantidadGeneral,
@@ -156,6 +177,10 @@ public class TicketController {
         return "redirect:/tickets";
     }
 
+    /**
+     * Muestra el formulario de edición de un ticket existente buscado por su id.
+     * Redirige al listado si el ticket no existe.
+     */
     @GetMapping("/tickets/editar/{id}")
     public String mostrarFormularioEditar(@PathVariable int id, Model model) {
         Ticket ticket = ticketService.obtenerTicketPorId(id);
@@ -166,12 +191,24 @@ public class TicketController {
         return "formTicket";
     }
 
+    /**
+     * Elimina el ticket con el id indicado y redirige al listado.
+     */
     @GetMapping("/tickets/eliminar/{id}")
-    public String eliminarTicket(@PathVariable int id) {
-        ticketService.eliminarTicket(id);
+    public String eliminarTicket(@PathVariable int id, RedirectAttributes redirectAttributes) {
+        try {
+            ticketService.eliminarTicket(id);
+            redirectAttributes.addFlashAttribute("okMensaje", "Ticket eliminado correctamente.");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("errorMensaje", "No se pudo eliminar el ticket.");
+        }
         return "redirect:/tickets";
     }
 
+    /**
+     * Comprueba si el asiento indicado en el ticket ya está asignado a otro ticket del mismo evento.
+     * Evita duplicidades de asiento por evento.
+     */
     private boolean asientoYaAsignado(Ticket ticket) {
         for (Ticket existente : ticketService.listarTodosLosTickets()) {
             if (existente.getId_evento() == ticket.getId_evento()
@@ -184,11 +221,18 @@ public class TicketController {
         return false;
     }
 
+    /**
+     * Recarga el formulario con los datos actuales y añade un mensaje de error al modelo.
+     */
     private void recargarFormulario(Model model, Ticket ticket, String errorMensaje) {
         cargarDatosFormulario(model, ticket);
         model.addAttribute("errorMensaje", errorMensaje);
     }
 
+    /**
+     * Crea tickets individuales para cada tipo (General, VIP, Premium) según las cantidades indicadas.
+     * Devuelve null si todo fue bien, o un mensaje de error si alguna inserción falló.
+     */
     private String crearTicketsMultiples(Ticket ticketBase, int cantidadGeneral, int cantidadVip, int cantidadPremium, BigDecimal precioGeneral, BigDecimal precioVip, BigDecimal precioPremium) {
         String error = crearTicketsDelTipo(ticketBase, "General", cantidadGeneral, precioGeneral);
         if (error != null) {
@@ -201,6 +245,11 @@ public class TicketController {
         return crearTicketsDelTipo(ticketBase, "Premium", cantidadPremium, precioPremium);
     }
 
+    /**
+     * Inserta en la base de datos 'cantidad' tickets del tipo y precio indicados,
+     * todos asociados a la compra base del ticketBase.
+     * Devuelve null si todo fue bien, o un mensaje de error si alguna inserción falló.
+     */
     private String crearTicketsDelTipo(Ticket ticketBase, String tipo, int cantidad, BigDecimal precio) {
         for (int i = 0; i < cantidad; i++) {
             Ticket nuevoTicket = new Ticket();
@@ -219,11 +268,18 @@ public class TicketController {
         return null;
     }
 
+    /**
+     * Carga en el modelo los datos necesarios para el formulario de ticket (eventos disponibles).
+     */
     private void cargarDatosFormulario(Model model, Ticket ticket) {
         model.addAttribute("ticket", ticket);
         model.addAttribute("eventos", eventoService.listarTodosLosEventos());
     }
 
+    /**
+     * Crea una compra vacía (total=0) asociada a un cliente por defecto si el ticket no tiene
+     * ninguna compra válida asignada. Esto cumple la restricción NOT NULL de id_compra en la tabla ticket.
+     */
     private void asegurarCompraAsociada(Ticket ticket) {
         if (ticket.getId_compra() > 0 && compraService.obtenerCompraPorId(ticket.getId_compra()) != null) {
             return;

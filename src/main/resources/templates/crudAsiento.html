@@ -1,3 +1,33 @@
+<!--
+  Listado de Asientos - crudAsiento.html
+  Propósito: Mostrar tabla CRUD de todos los asientos registrados en el sistema.
+  Contenido: Tabla con columnas:
+    1. Lugar: nombre del lugar asociado (traducción desde ID)
+    2. Fila: letra de fila del asiento (ej: A, B, C)
+    3. Número asiento: número secuencial del asiento en la fila
+    4. Zona: tipo de asiento (general/vip/premium) - define precio
+    5. Acciones: botones Editar y Eliminar
+
+  Atributos Thymeleaf principales:
+    - th:each: asiento : ${asientos} - itera sobre lista de asientos
+    - th:text: muestra valores de asiento
+    - lugares[asiento.id_lugar]: Map que traduce ID de lugar a nombre
+    - th:href: rutas dinámicas a editar (/asientos/editar/{id}) y eliminar
+
+  Modelos pasados:
+    - asientos: List<Asiento> - todos los asientos
+    - lugares: Map<Integer, String> - mapeo id_lugar -> nombre lugar
+
+  Acciones:
+    - Nuevo asiento: botón que lleva a /asientos/nuevo
+    - Editar: GET a /asientos/editar/{id} carga formulario
+    - Eliminar: GET a /asientos/eliminar/{id} elimina y redirecciona a listado
+
+  Creación masiva: En el formulario de nuevo asiento, se pueden crear múltiples asientos
+    de una fila con diferentes zonas (general, vip, premium).
+
+  Importancia: Los asientos son el inventario de entradas. Vinculan evento -> lugar -> zona -> precio.
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>
@@ -29,6 +59,9 @@
             <a th:href="@{/asientos/nuevo}" class="btn btn-primary">Nuevo Asiento</a>
         </div>
     </div>
+
+    <div th:if="${okMensaje}" class="alert alert-success" th:text="${okMensaje}"></div>
+    <div th:if="${errorMensaje}" class="alert alert-danger" th:text="${errorMensaje}"></div>
 
     <div class="table-responsive">
     <table class="table table-bordered table-striped table-hover align-middle">

@@ -1,3 +1,31 @@
+<!--
+  Página Principal de Cliente - home.html
+  Propósito: Landing page de eventos con carrusel destacado, filtros de búsqueda y grid de eventos.
+  Flujo de negocio:
+    1. Carrusel Bootstrap: muestra eventos con imagen de forma rotativa (4.5s de intervalo)
+    2. Sidebar de filtros: categoría (concierto/teatro/museo) y disponibilidad (todos/disponibles/agotados)
+    3. Grid responsive: 3 columnas desktop, 2 tablets, 1 móvil con cards de eventos
+    4. Acciones: Ver Detalles o Comprar Tickets (deshabilitado si agotado)
+
+  Atributos Thymeleaf principales:
+    - th:each: itera sobre lista de eventos para indicadores, slides y cards
+    - th:if: condicionales para mostrar imagen, carousel items, botones según disponibilidad
+    - th:unless: alternativa a th:if para fallback (ej: mostrar emoji si no hay imagen)
+    - th:data-*: atributos data para filtrado con JavaScript (data-tipo, data-disp)
+    - th:href: rutas dinámicas a detalles de evento, carrito, login, registro
+    - th:text, th:classappend: texto dinámico y clases condicionales
+
+  Modelos pasados:
+    - eventos: List<Evento> - todos los eventos del sistema
+    - disponibles: Map<Integer, Integer> - cantidad de asientos disponibles por evento.id
+    - usuarioSesion: Usuario o null - usuario autenticado en sesión
+    - esAdmin: boolean - indicador de permisos administrativos
+    - carritoCantidad: int - cantidad de items en carrito del usuario
+
+  Filtrado JavaScript en app.js:
+    - Se filtra por atributo data-tipo (radio name="filtro-tipo")
+    - Se filtra por atributo data-disp (radio name="filtro-disp")
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>
@@ -82,6 +110,15 @@
                 <a th:if="${usuarioSesion == null}" th:href="@{/registro}" class="btn btn-primary btn-sm">
                     Registrarse
                 </a>
+
+                <button class="nt-nav-icon nt-filter-toggle d-lg-none"
+                        type="button"
+                        data-bs-toggle="offcanvas"
+                        data-bs-target="#mobileFilters"
+                        aria-controls="mobileFilters"
+                        aria-label="Abrir filtros">
+                    <i class="bi bi-list" aria-hidden="true"></i>
+                </button>
             </div>
         </div>
     </nav>
@@ -152,73 +189,84 @@
     <div class="row g-4">
 
         <!-- ---- SIDEBAR FILTROS ---- -->
-        <aside class="col-12 col-lg-3" aria-label="Filtros de búsqueda">
+        <aside class="col-12 col-lg-3 offcanvas-lg offcanvas-end nt-filters-offcanvas"
+               tabindex="-1"
+               id="mobileFilters"
+               aria-labelledby="mobileFiltersLabel"
+               aria-label="Filtros de búsqueda">
 
-            <!-- Categoría -->
-            <div class="filter-card">
-                <button class="filter-toggle-btn" type="button"
-                        data-bs-toggle="collapse" data-bs-target="#filtroCategoria"
-                        aria-expanded="true">
-                    Categoría <span class="arrow">▾</span>
-                </button>
-                <div id="filtroCategoria" class="collapse show">
-                    <ul class="filter-options">
-                        <li>
-                            <label>
-                                <input type="radio" name="filtro-tipo" value="all" checked>
-                                Todos
-                            </label>
-                        </li>
-                        <li>
-                            <label>
-                                <input type="radio" name="filtro-tipo" value="concierto">
-                                🎵 Conciertos
-                            </label>
-                        </li>
-                        <li>
-                            <label>
-                                <input type="radio" name="filtro-tipo" value="teatro">
-                                🎭 Teatros
-                            </label>
-                        </li>
-                        <li>
-                            <label>
-                                <input type="radio" name="filtro-tipo" value="museo">
-                                🏛 Museos
-                            </label>
-                        </li>
-                    </ul>
-                </div>
+            <div class="offcanvas-header d-lg-none">
+                <h2 class="offcanvas-title h5 mb-0" id="mobileFiltersLabel">Filtrar eventos</h2>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#mobileFilters" aria-label="Cerrar"></button>
             </div>
 
-            <!-- Disponibilidad -->
-            <div class="filter-card">
-                <button class="filter-toggle-btn" type="button"
-                        data-bs-toggle="collapse" data-bs-target="#filtroDisp"
-                        aria-expanded="true">
-                    Disponibilidad <span class="arrow">▾</span>
-                </button>
-                <div id="filtroDisp" class="collapse show">
-                    <ul class="filter-options">
-                        <li>
-                            <label>
-                                <input type="radio" name="filtro-disp" value="all" checked>
-                                Todos
-                            </label>
-                        </li>
-                        <li>
-                            <label>
-                                <input type="radio" name="filtro-disp" value="disponible">
-                                ✅ Con entradas
-                            </label>
-                        </li>
-                        <li>
-                            <label>
-                                <input type="radio" name="filtro-disp" value="agotado">
-                                ❌ Agotados
-                            </label>
-                        </li>
-                    </ul>
+            <div class="offcanvas-body nt-filters-body">
+                <!-- Categoría -->
+                <div class="filter-card">
+                    <button class="filter-toggle-btn" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#filtroCategoria"
+                            aria-expanded="true">
+                        Categoría <span class="arrow">▾</span>
+                    </button>
+                    <div id="filtroCategoria" class="collapse show">
+                        <ul class="filter-options">
+                            <li>
+                                <label>
+                                    <input type="radio" name="filtro-tipo" value="all" checked>
+                                    Todos
+                                </label>
+                            </li>
+                            <li>
+                                <label>
+                                    <input type="radio" name="filtro-tipo" value="concierto">
+                                    🎵 Conciertos
+                                </label>
+                            </li>
+                            <li>
+                                <label>
+                                    <input type="radio" name="filtro-tipo" value="teatro">
+                                    🎭 Teatros
+                                </label>
+                            </li>
+                            <li>
+                                <label>
+                                    <input type="radio" name="filtro-tipo" value="museo">
+                                    🏛 Museos
+                                </label>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Disponibilidad -->
+                <div class="filter-card">
+                    <button class="filter-toggle-btn" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#filtroDisp"
+                            aria-expanded="true">
+                        Disponibilidad <span class="arrow">▾</span>
+                    </button>
+                    <div id="filtroDisp" class="collapse show">
+                        <ul class="filter-options">
+                            <li>
+                                <label>
+                                    <input type="radio" name="filtro-disp" value="all" checked>
+                                    Todos
+                                </label>
+                            </li>
+                            <li>
+                                <label>
+                                    <input type="radio" name="filtro-disp" value="disponible">
+                                    ✅ Con entradas
+                                </label>
+                            </li>
+                            <li>
+                                <label>
+                                    <input type="radio" name="filtro-disp" value="agotado">
+                                    ❌ Agotados
+                                </label>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 

@@ -1,3 +1,40 @@
+<!--
+  Formulario de Compra - formCompra.html
+  Propósito: Crear o editar una compra registrada en el sistema.
+  Contenido del formulario:
+    1. Usuario: selector desplegable con todos los usuarios registrados
+    2. Fecha y hora: datetime-local input
+    3. Total: monto total de la compra (number con paso 0.01)
+
+  Atributos Thymeleaf principales:
+    - th:object="${compra}": vincula objeto compra del modelo
+    - th:field: vincula atributos del objeto a inputs
+    - th:each: usuario : ${usuarios} - itera para llenar selector
+    - th:text: muestra opción con nombre + email del usuario
+    - th:errors: muestra errores de validación (ej: fecha inválida)
+
+  Modelos pasados:
+    - compra: Compra - objeto con id, id_usuario, fecha, total
+    - compra.id: 0 si es nuevo, > 0 si es edición
+    - usuarios: List<Usuario> - para llenar selector
+    - errorMensaje: mensaje de error (si hay)
+
+  Procesamiento:
+    - POST a /compras/guardar (para ambas operaciones)
+
+  Validación en backend:
+    - Usuario obligatorio y válido
+    - Fecha debe ser válida (formato datetime-local)
+    - Total obligatorio y positivo
+
+  Flujo:
+    1. Crear: GET /compras/nuevo muestra formulario vacío
+    2. Editar: GET /compras/editar/{id} carga compra en formulario
+    3. Guardar: POST /compras/guardar procesa ambos casos
+
+  Nota: En la plataforma real, las compras se crean automáticamente al pagar carrito,
+        no manualmente. Este formulario es para administración/correcciones.
+-->
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>

@@ -1,3 +1,38 @@
+<!--
+  Página de Detalle de Evento - homeEvento.html
+  Propósito: Mostrar información completa de un evento e interfaz para comprar tickets.
+  Flujo de compra:
+    1. Columna izquierda: imagen del evento, nombre, descripción, fecha y disponibles totales
+    2. Columna derecha: formulario de compra con selector de tipo (general/vip/premium)
+    3. Selector dinámico: muestra disponibilidad y precio para cada tipo de ticket
+    4. Cantidad: campo number con validación de máximo según disponibilidad del tipo
+    5. Total estimado: se actualiza con JavaScript según tipo y cantidad
+    6. Botón Añadir al carrito: deshabilitado si no hay disponibilidad
+
+  Atributos Thymeleaf principales:
+    - th:object: vincula objeto compraEntrada del formulario
+    - th:field: genera nombres de input automáticamente (*{tipo}, *{cantidad})
+    - th:attr: atributos data para pasar precios y disponibilidad a JavaScript
+    - th:text: muestra disponibilidad, precio y cantidad máxima para cada tipo
+    - th:disabled: deshabilita opciones sin stock
+    - th:if, th:unless: mostrar/ocultar secciones según mensajes de éxito/error
+
+  Modelos pasados:
+    - evento: Evento - evento actual con imagen, nombre, descripción, fecha
+    - disponibles: int - cantidad total de entradas disponibles
+    - disponiblesPorTipo: Map<String, Integer> - disponibles por tipo (general/vip/premium)
+    - precios: Map<String, Double> - precio unitario por tipo
+    - carritoCantidad: int - items en carrito del usuario
+    - esAdmin: boolean - acceso a panel admin
+    - usuarioSesion: Usuario o null - usuario autenticado
+    - compraEntrada: EventoForm - objeto para mapear form con th:object
+    - errorMensaje, okMensaje: mensajes de feedback
+
+  JavaScript en app.js:
+    - Actualiza totalEstimado al cambiar tipo o cantidad
+    - Valida que cantidad no supere disponibles del tipo seleccionado
+    - Muestra/oculta mensaje de sin disponibilidad según selector
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>

@@ -44,6 +44,7 @@ public class HomeController {
     private final CompraService compraService;
     private final AsientoService asientoService;
 
+    // Inicializa el controlador inyectando los servicios necesarios para eventos, tickets, compras y asientos.
     public HomeController(EventoService eventoService,
                           TicketService ticketService,
                           CompraService compraService,
@@ -54,11 +55,13 @@ public class HomeController {
         this.asientoService = asientoService;
     }
 
+    // Redirige las rutas generales de entrada hacia la vista principal del cliente.
     @GetMapping({"/", "/home"})
     public String redirigirHomeCliente() {
         return "redirect:/cliente/home";
     }
 
+    // Carga el home del cliente con todos los eventos, la disponibilidad calculada y los datos de sesión.
     @GetMapping("/cliente/home")
     public String mostrarHomeCliente(@RequestParam(value = "error", required = false) String error,
                                      Model model,
@@ -82,6 +85,7 @@ public class HomeController {
         return "home";
     }
 
+    // Muestra el detalle de un evento concreto y prepara el formulario para añadir entradas al carrito.
     @GetMapping("/cliente/evento/{id}")
     public String mostrarDetalleEventoCliente(@PathVariable int id,
                                               @RequestParam(value = "ok", required = false) Integer ok,
@@ -102,6 +106,7 @@ public class HomeController {
         return "homeEvento";
     }
 
+    // Valida la petición del usuario y añade al carrito la cantidad solicitada del tipo de entrada elegido.
     @PostMapping("/cliente/evento/{id}/agregar-carrito")
     public String agregarAlCarrito(@PathVariable int id,
                                    @ModelAttribute("compraEntrada") CompraEntrada compraEntrada,
@@ -132,11 +137,17 @@ public class HomeController {
             return "homeEvento";
         }
 
-        BigDecimal precioUnitario = obtenerPrecioPorTipo(compraEntrada.getTipo());
+        BigDecimal precioUnitario = obtenerPrecioDisponiblePorEventoYTipo(evento.getId(), compraEntrada.getTipo());
+        if (precioUnitario.compareTo(BigDecimal.ZERO) <= 0) {
+            cargarDetalleEvento(model, evento, compraEntrada, session);
+            model.addAttribute("errorMensaje", "No se pudo determinar el precio para el tipo seleccionado.");
+            return "homeEvento";
+        }
 
         CarritoItem existente = buscarItem(carrito, evento.getId(), tipoNormalizado);
         if (existente != null) {
             existente.setCantidad(existente.getCantidad() + compraEntrada.getCantidad());
+            existente.setPrecioUnitario(precioUnitario);
         } else {
             CarritoItem item = new CarritoItem();
             item.setIdEvento(evento.getId());
@@ -151,6 +162,7 @@ public class HomeController {
         return "redirect:/cliente/evento/" + id + "?ok=1";
     }
 
+    // Muestra el contenido actual del carrito y calcula el total acumulado de la compra.
     @GetMapping("/cliente/carrito")
     public String mostrarCarrito(@RequestParam(value = "ok", required = false) Integer ok,
                                  @RequestParam(value = "error", required = false) String error,
@@ -172,6 +184,7 @@ public class HomeController {
         return "carrito";
     }
 
+    // Construye el historial de compras del usuario autenticado o de todas las compras si el usuario es administrador.
     @GetMapping("/cliente/historial")
     public String mostrarHistorialCompras(Model model, HttpSession session) {
         Usuario usuarioSesion = obtenerUsuarioSesion(session);
@@ -260,6 +273,7 @@ public class HomeController {
         return "historialCompras";
     }
 
+    // Elimina del carrito el elemento indicado por su posición y vuelve a mostrar el listado actualizado.
     @PostMapping("/cliente/carrito/eliminar")
     public String eliminarItemCarrito(@RequestParam("index") int index, HttpSession session) {
         List<CarritoItem> carrito = obtenerCarrito(session);
@@ -270,6 +284,7 @@ public class HomeController {
         return "redirect:/cliente/carrito";
     }
 
+    // Valida el carrito, registra la compra y asigna los tickets y asientos disponibles al usuario autenticado.
     @PostMapping("/cliente/carrito/pagar")
     public String pagarCarrito(HttpSession session) {
         List<CarritoItem> carrito = obtenerCarrito(session);
@@ -361,6 +376,7 @@ public class HomeController {
         return "redirect:/cliente/carrito?ok=1";
     }
 
+    // Calcula y carga en el modelo la disponibilidad y los precios por tipo para la ficha de un evento.
     private void cargarDetalleEvento(Model model, Evento evento, CompraEntrada compraEntrada, HttpSession session) {
         List<CarritoItem> carrito = obtenerCarrito(session);
         Map<String, Integer> disponiblesPorTipo = new LinkedHashMap<>();
@@ -397,6 +413,7 @@ public class HomeController {
     }
 
 
+    // Devuelve cuántos tickets vendidos tiene un evento, evitando consultas innecesarias con identificadores no válidos.
     private int obtenerVendidosPorEvento(int idEvento) {
         if (idEvento <= 0) {
             return 0;
@@ -405,6 +422,7 @@ public class HomeController {
         return ticketService.obtenerCantidadVendidaPorEvento(idEvento);
     }
 
+    // Obtiene todos los asientos libres del lugar asociado a un evento, excluyendo los ya ocupados por tickets asignados.
     private List<Asiento> obtenerAsientosLibresParaEvento(int idEvento) {
         Evento evento = eventoService.obtenerEventoPorId(idEvento);
         if (evento == null) {
@@ -436,6 +454,7 @@ public class HomeController {
         return libres;
     }
 
+    // Filtra los asientos libres de un evento para quedarse solo con los que pertenecen a la zona o tipo indicado.
     private List<Asiento> obtenerAsientosLibresParaEventoYTipo(int idEvento, String tipo) {
         String tipoNormalizado = normalizarTipo(tipo);
         List<Asiento> libresPorTipo = new ArrayList<>();
@@ -447,6 +466,7 @@ public class HomeController {
         return libresPorTipo;
     }
 
+    // Extrae de forma aleatoria uno de los asientos disponibles para repartir las asignaciones al confirmar la compra.
     private Asiento extraerAsientoAleatorio(List<Asiento> asientosDisponibles) {
         if (asientosDisponibles == null || asientosDisponibles.isEmpty()) {
             return null;
@@ -455,22 +475,24 @@ public class HomeController {
         return asientosDisponibles.remove(indice);
     }
 
-    private BigDecimal obtenerPrecioPorTipo(String tipo) {
-        String tipoNormalizado = normalizarTipo(tipo);
-        if ("vip".equals(tipoNormalizado)) {
-            return new BigDecimal("50.00");
-        }
-        if ("premium".equals(tipoNormalizado)) {
-            return new BigDecimal("80.00");
-        }
-        return new BigDecimal("25.00");
+    // Obtiene el precio real del stock disponible para un evento y tipo concreto.
+    // Se usa para que el carrito y el total se calculen con el mismo precio mostrado en la ficha del evento.
+    private BigDecimal obtenerPrecioDisponiblePorEventoYTipo(int idEvento, String tipo) {
+        List<Ticket> stockTipo = obtenerTicketsStockPorEventoYTipo(idEvento, tipo);
+        return stockTipo.stream()
+                .map(Ticket::getPrecio_unitario)
+                .filter(precio -> precio != null && precio.compareTo(BigDecimal.ZERO) > 0)
+                .findFirst()
+                .orElse(BigDecimal.ZERO);
     }
 
+    // Normaliza el tipo de entrada o zona para poder comparar valores sin errores por mayúsculas o espacios.
     private String normalizarTipo(String tipo) {
         return tipo == null ? "general" : tipo.trim().toLowerCase(Locale.ROOT);
     }
 
     @SuppressWarnings("unchecked")
+    // Recupera el carrito guardado en sesión o crea uno nuevo si todavía no existe.
     private List<CarritoItem> obtenerCarrito(HttpSession session) {
         Object carrito = session.getAttribute(CARRITO_SESSION_KEY);
         if (carrito instanceof List<?>) {
@@ -481,6 +503,7 @@ public class HomeController {
         return nuevo;
     }
 
+    // Busca si ya existe en el carrito una línea correspondiente al mismo evento y tipo de entrada.
     private CarritoItem buscarItem(List<CarritoItem> carrito, int idEvento, String tipo) {
         for (CarritoItem item : carrito) {
             if (item.getIdEvento() == idEvento && item.getTipo().equals(tipo)) {
@@ -491,6 +514,7 @@ public class HomeController {
     }
 
 
+    // Suma cuántas entradas de un evento y tipo concretos están ya reservadas temporalmente dentro del carrito.
     private int obtenerCantidadEnCarritoPorEventoYTipo(List<CarritoItem> carrito, int idEvento, String tipo) {
         int total = 0;
         String tipoNormalizado = normalizarTipo(tipo);
@@ -503,6 +527,7 @@ public class HomeController {
     }
 
 
+    // Calcula la disponibilidad total visible de un evento descontando también las entradas apartadas en el carrito actual.
     private int obtenerDisponiblesTotalesPorEvento(List<CarritoItem> carrito, Evento evento) {
         int total = 0;
         for (String tipo : List.of("general", "vip", "premium")) {
@@ -513,6 +538,7 @@ public class HomeController {
         return total;
     }
 
+    // Suma el stock disponible de tickets de un evento y tipo determinados teniendo en cuenta la cantidad guardada en cada ticket.
     private int obtenerStockDisponiblePorEventoYTipo(int idEvento, String tipo) {
         String tipoNormalizado = normalizarTipo(tipo);
         int total = 0;
@@ -522,6 +548,7 @@ public class HomeController {
         return total;
     }
 
+    // Recupera los tickets que todavía forman parte del stock disponible para un evento y un tipo concretos.
     private List<Ticket> obtenerTicketsStockPorEventoYTipo(int idEvento, String tipo) {
         String tipoNormalizado = normalizarTipo(tipo);
         Map<Integer, Compra> comprasPorId = new LinkedHashMap<>();
@@ -545,6 +572,7 @@ public class HomeController {
         return stock;
     }
 
+    // Calcula el importe total del carrito sumando los subtotales de todos sus elementos.
     private BigDecimal calcularTotalCarrito(List<CarritoItem> carrito) {
         BigDecimal total = BigDecimal.ZERO;
         for (CarritoItem item : carrito) {
@@ -553,11 +581,13 @@ public class HomeController {
         return total.setScale(2, RoundingMode.HALF_UP);
     }
 
+    // Obtiene de la sesión el usuario autenticado actualmente o devuelve null si no hay sesión iniciada.
     private Usuario obtenerUsuarioSesion(HttpSession session) {
         Object usuario = session.getAttribute(AuthController.USUARIO_SESION_KEY);
         return usuario instanceof Usuario ? (Usuario) usuario : null;
     }
 
+    // Carga en el modelo la información básica de la sesión para que las vistas sepan si hay usuario y si es administrador.
     private void cargarDatosSesion(Model model, HttpSession session) {
         Usuario usuario = obtenerUsuarioSesion(session);
         model.addAttribute("usuarioSesion", usuario);
@@ -568,18 +598,22 @@ public class HomeController {
         private String tipo = "general";
         private int cantidad = 1;
 
+        // Devuelve el tipo de entrada seleccionado en el formulario de compra.
         public String getTipo() {
             return tipo;
         }
 
+        // Guarda el tipo de entrada elegido por el usuario antes de procesar la compra.
         public void setTipo(String tipo) {
             this.tipo = tipo;
         }
 
+        // Devuelve la cantidad de entradas solicitadas en la operación actual.
         public int getCantidad() {
             return cantidad;
         }
 
+        // Actualiza la cantidad de entradas que el usuario quiere añadir al carrito.
         public void setCantidad(int cantidad) {
             this.cantidad = cantidad;
         }
@@ -592,46 +626,57 @@ public class HomeController {
         private int cantidad;
         private BigDecimal precioUnitario;
 
+        // Devuelve el identificador del evento asociado a esta línea del carrito.
         public int getIdEvento() {
             return idEvento;
         }
 
+        // Asigna el identificador del evento al que pertenece esta línea del carrito.
         public void setIdEvento(int idEvento) {
             this.idEvento = idEvento;
         }
 
+        // Devuelve el nombre del evento mostrado al usuario dentro del carrito.
         public String getNombreEvento() {
             return nombreEvento;
         }
 
+        // Guarda el nombre del evento para mostrarlo en la vista del carrito.
         public void setNombreEvento(String nombreEvento) {
             this.nombreEvento = nombreEvento;
         }
 
+        // Devuelve el tipo de entrada almacenado en esta línea del carrito.
         public String getTipo() {
             return tipo;
         }
 
+        // Actualiza el tipo de entrada asociado a esta línea del carrito.
         public void setTipo(String tipo) {
             this.tipo = tipo;
         }
 
+        // Devuelve la cantidad de entradas acumuladas para esta línea del carrito.
         public int getCantidad() {
             return cantidad;
         }
 
+        // Guarda la cantidad de entradas seleccionadas para esta línea del carrito.
         public void setCantidad(int cantidad) {
             this.cantidad = cantidad;
         }
 
+        // Devuelve el precio unitario aplicado a cada entrada de esta línea del carrito.
         public BigDecimal getPrecioUnitario() {
             return precioUnitario;
         }
 
+        // Guarda el precio unitario que se usará para calcular el subtotal del carrito.
         public void setPrecioUnitario(BigDecimal precioUnitario) {
             this.precioUnitario = precioUnitario;
         }
 
+        // Calcula el subtotal multiplicando el precio unitario por la cantidad de entradas seleccionadas.
         public BigDecimal getSubtotal() {
             if (precioUnitario == null) {
                 return BigDecimal.ZERO;
@@ -647,42 +692,52 @@ public class HomeController {
         private BigDecimal total;
         private List<HistorialDetalleView> detalles = new ArrayList<>();
 
+        // Devuelve el identificador de la compra mostrada en el historial.
         public int getId() {
             return id;
         }
 
+        // Asigna el identificador de la compra representada en la vista de historial.
         public void setId(int id) {
             this.id = id;
         }
 
+        // Devuelve el identificador del usuario propietario de la compra.
         public int getIdUsuario() {
             return idUsuario;
         }
 
+        // Guarda el identificador del usuario asociado a la compra del historial.
         public void setIdUsuario(int idUsuario) {
             this.idUsuario = idUsuario;
         }
 
+        // Devuelve la fecha y hora en la que se registró la compra.
         public LocalDateTime getFecha() {
             return fecha;
         }
 
+        // Establece la fecha y hora que se mostrará para la compra del historial.
         public void setFecha(LocalDateTime fecha) {
             this.fecha = fecha;
         }
 
+        // Devuelve el total pagado en la compra representada.
         public BigDecimal getTotal() {
             return total;
         }
 
+        // Guarda el importe total pagado en la compra del historial.
         public void setTotal(BigDecimal total) {
             this.total = total;
         }
 
+        // Devuelve el detalle de tickets asociado a la compra mostrada.
         public List<HistorialDetalleView> getDetalles() {
             return detalles;
         }
 
+        // Asigna la lista de detalles que cuelga de una compra del historial.
         public void setDetalles(List<HistorialDetalleView> detalles) {
             this.detalles = detalles;
         }
@@ -702,98 +757,122 @@ public class HomeController {
         private Integer numeroAsiento;
         private String zona;
 
+        // Devuelve el identificador del ticket que forma parte del detalle del historial.
         public int getIdTicket() {
             return idTicket;
         }
 
+        // Asigna el identificador del ticket representado en el detalle del historial.
         public void setIdTicket(int idTicket) {
             this.idTicket = idTicket;
         }
 
+        // Devuelve el nombre del evento asociado al ticket comprado.
         public String getNombreEvento() {
             return nombreEvento;
         }
 
+        // Guarda el nombre del evento que se mostrará en el detalle del historial.
         public void setNombreEvento(String nombreEvento) {
             this.nombreEvento = nombreEvento;
         }
 
+        // Devuelve la fecha del evento relacionado con el ticket.
         public java.time.LocalDate getFechaEvento() {
             return fechaEvento;
         }
 
+        // Establece la fecha del evento para mostrarla dentro del historial.
         public void setFechaEvento(java.time.LocalDate fechaEvento) {
             this.fechaEvento = fechaEvento;
         }
 
+        // Devuelve el nombre del lugar en el que se celebra el evento.
         public String getNombreLugar() {
             return nombreLugar;
         }
 
+        // Guarda el nombre del lugar asociado al evento del ticket.
         public void setNombreLugar(String nombreLugar) {
             this.nombreLugar = nombreLugar;
         }
 
+        // Devuelve la ciudad del lugar asociado al evento comprado.
         public String getCiudadLugar() {
             return ciudadLugar;
         }
 
+        // Guarda la ciudad del lugar para mostrarla en el historial.
         public void setCiudadLugar(String ciudadLugar) {
             this.ciudadLugar = ciudadLugar;
         }
 
+        // Devuelve el tipo de entrada comprado para ese ticket.
         public String getTipo() {
             return tipo;
         }
 
+        // Establece el tipo de entrada que se mostrará en el detalle del historial.
         public void setTipo(String tipo) {
             this.tipo = tipo;
         }
 
+        // Devuelve la cantidad de entradas agrupadas en este detalle del historial.
         public int getCantidad() {
             return cantidad;
         }
 
+        // Guarda la cantidad de entradas correspondiente a este detalle del historial.
         public void setCantidad(int cantidad) {
             this.cantidad = cantidad;
         }
 
+        // Devuelve el precio unitario aplicado a cada entrada del detalle.
         public BigDecimal getPrecioUnitario() {
             return precioUnitario;
         }
 
+        // Guarda el precio unitario de las entradas incluidas en el detalle.
         public void setPrecioUnitario(BigDecimal precioUnitario) {
             this.precioUnitario = precioUnitario;
         }
 
+        // Devuelve el subtotal calculado para el detalle del historial.
         public BigDecimal getSubtotal() {
             return subtotal;
         }
 
+        // Establece el subtotal ya calculado que se mostrará en el detalle del historial.
         public void setSubtotal(BigDecimal subtotal) {
             this.subtotal = subtotal;
         }
 
+        // Devuelve la fila del asiento asignado al ticket, si existe.
         public String getFila() {
             return fila;
         }
 
+        // Guarda la fila del asiento asociado al ticket comprado.
         public void setFila(String fila) {
             this.fila = fila;
         }
 
+        // Devuelve el número del asiento asignado al ticket, si existe.
         public Integer getNumeroAsiento() {
             return numeroAsiento;
         }
 
+        // Guarda el número de asiento relacionado con el ticket del historial.
         public void setNumeroAsiento(Integer numeroAsiento) {
             this.numeroAsiento = numeroAsiento;
         }
 
+        // Devuelve la zona del asiento asignado dentro del recinto.
         public String getZona() {
             return zona;
         }
 
+        // Guarda la zona del asiento para mostrarla dentro del historial de compras.
         public void setZona(String zona) {
             this.zona = zona;
         }

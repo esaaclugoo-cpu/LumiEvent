@@ -9,15 +9,22 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Implementación JDBC del repositorio de compras.
+ * Accede directamente a la tabla compra de MySQL usando la conexión Singleton de Conexion.
+ */
 @Repository
 @Qualifier("compraDAOJdbc")
-public class CompraDAOJdbc implements CompraDAO{
+public class CompraDAOJdbc implements CompraDAO {
 
+    /** Obtiene la conexión activa desde el Singleton Conexion. */
     private Connection getConnection() {
         return Conexion.getInstancia().getConnection();
     }
 
-
+    /**
+     * Inserta una nueva compra en la base de datos y actualiza el id generado en el objeto.
+     */
     @Override
     public void guardar(Compra compra) {
 
@@ -49,6 +56,9 @@ public class CompraDAOJdbc implements CompraDAO{
 
     }
 
+    /**
+     * Actualiza id_usuario, fecha y total de una compra existente identificada por su id.
+     */
     @Override
     public void actualizar(Compra compra) {
 
@@ -78,13 +88,15 @@ public class CompraDAOJdbc implements CompraDAO{
 
     }
 
+    /**
+     * Elimina la compra con el id indicado de la base de datos.
+     */
     @Override
     public void eliminar(int id) {
 
         Connection conn = getConnection();
         if (conn == null) {
-            System.err.println("❌ No se pudo obtener conexión a la base de datos.");
-            return;
+            throw new RuntimeException("No hay conexión disponible para eliminar compra.");
         }
 
         String sql = "DELETE FROM compra WHERE id = ?";
@@ -97,12 +109,14 @@ public class CompraDAOJdbc implements CompraDAO{
                 System.err.println("❌ No se encontró la compra para eliminar.");
             }
         } catch (SQLException e) {
-            System.err.println("❌ Error al eliminar la compra.");
-            e.printStackTrace();
+            throw new RuntimeException("No se pudo eliminar la compra con id " + id, e);
         }
 
     }
 
+    /**
+     * Obtiene una compra por su id. Devuelve null si no existe o hay error de conexión.
+     */
     @Override
     public Compra obtenerPorId(int id) {
 
@@ -130,6 +144,9 @@ public class CompraDAOJdbc implements CompraDAO{
         return compra;
     }
 
+    /**
+     * Devuelve la lista completa de compras de la tabla compra.
+     */
     @Override
     public List<Compra> listarTodos() {
 
@@ -156,6 +173,10 @@ public class CompraDAOJdbc implements CompraDAO{
         return compras;
     }
 
+    /**
+     * Mapea una fila del ResultSet al objeto Compra correspondiente.
+     * Convierte el Timestamp de MySQL a LocalDateTime de Java.
+     */
     private Compra mapearCompra(ResultSet rs) throws SQLException {
         Compra compra = new Compra();
         compra.setId(rs.getInt("id"));

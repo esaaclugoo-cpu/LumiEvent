@@ -1,22 +1,34 @@
 package com.ilerna.novaticket.repository;
+
 import com.ilerna.novaticket.connection.Conexion;
 import com.ilerna.novaticket.model.*;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
+
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Implementación JDBC del repositorio de eventos.
+ * Usa la conexión Singleton de Conexion para acceder directamente a la base de datos MySQL.
+ * Gestiona la tabla evento y sus subtipos (concierto, teatro, museo) mediante tablas secundarias.
+ */
 @Repository
 @Qualifier("eventoDAOJdbc")
-public class EventoDAOJdbc implements EventoDAO{
+public class EventoDAOJdbc implements EventoDAO {
 
+    /** Obtiene la conexión activa desde el Singleton Conexion. */
     private Connection getConnection() {
         return Conexion.getInstancia().getConnection();
     }
 
-
+    /**
+     * Inserta un evento en la tabla evento y luego inserta los datos específicos
+     * del subtipo en su tabla correspondiente (concierto, teatro o museo).
+     * Actualiza el id del evento con el generado por la base de datos.
+     */
     @Override
     public void guardar(Evento evento) {
         Connection conn = getConnection();
@@ -85,6 +97,10 @@ public class EventoDAOJdbc implements EventoDAO{
         }
     }
 
+    /**
+     * Actualiza los campos comunes del evento en la tabla evento
+     * y llama a updateSubclass para actualizar también la tabla del subtipo.
+     */
     @Override
     public void actualizar(Evento evento) {
          Connection conn = getConnection();
@@ -118,6 +134,10 @@ public class EventoDAOJdbc implements EventoDAO{
         }
     }
 
+    /**
+     * Actualiza los campos específicos del subtipo del evento (concierto, teatro o museo)
+     * en su tabla secundaria correspondiente.
+     */
     private void updateSubclass(Evento evento) {
         Connection conn = getConnection();
         if (conn == null) return;
@@ -163,29 +183,59 @@ public class EventoDAOJdbc implements EventoDAO{
         }
     }
 
+    /**
+     * Elimina el evento por su id.
+     *
+     * Antes borra tickets asociados al evento para evitar bloqueos de FK.
+     * La eliminación de subtablas del evento se realiza por ON DELETE CASCADE.
+     */
     @Override
     public void eliminar(int id) {
         Connection conn = getConnection();
         if (conn == null) {
-            System.err.println("❌ No se pudo obtener conexión a la base de datos.");
-            return;
+            throw new RuntimeException("No hay conexión disponible para eliminar evento.");
         }
 
-        String sql = "DELETE FROM evento WHERE id = ?";
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, id);
-            int rows = pstmt.executeUpdate();
-            if (rows > 0) {
-                System.out.println("✅ Evento eliminado correctamente.");
-            } else {
-                System.err.println("❌ No se encontró el evento para eliminar.");
+        String sqlEliminarTickets = "DELETE FROM ticket WHERE id_evento = ?";
+        String sqlEliminarEvento = "DELETE FROM evento WHERE id = ?";
+
+        boolean autoCommitAnterior = true;
+        try {
+            autoCommitAnterior = conn.getAutoCommit();
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement pstmtTickets = conn.prepareStatement(sqlEliminarTickets);
+                 PreparedStatement pstmtEvento = conn.prepareStatement(sqlEliminarEvento)) {
+                pstmtTickets.setInt(1, id);
+                pstmtTickets.executeUpdate();
+
+                pstmtEvento.setInt(1, id);
+                int rows = pstmtEvento.executeUpdate();
+                if (rows == 0) {
+                    throw new RuntimeException("No se encontró el evento para eliminar.");
+                }
             }
+
+            conn.commit();
         } catch (SQLException e) {
-            System.err.println("❌ Error al eliminar el evento.");
-            e.printStackTrace();
+            try {
+                conn.rollback();
+            } catch (SQLException ignored) {
+            }
+            throw new RuntimeException("No se pudo eliminar el evento con id " + id, e);
+        } finally {
+            try {
+                conn.setAutoCommit(autoCommitAnterior);
+            } catch (SQLException ignored) {
+            }
         }
     }
 
+    /**
+     * Obtiene un evento por su id realizando un JOIN con la tabla lugar
+     * para rellenar nombre_lugar, direccion y ciudad.
+     * Luego carga los datos del subtipo llamando a loadSubclassData.
+     */
     @Override
     public Evento obtenerPorId(int id) {
         Evento evento = null;
@@ -217,6 +267,10 @@ public class EventoDAOJdbc implements EventoDAO{
         return evento;
     }
 
+    /**
+     * Carga los datos específicos del subtipo del evento (concierto, teatro o museo)
+     * desde su tabla secundaria y los asigna al objeto Evento ya creado.
+     */
     private void loadSubclassData(Evento evento) {
         Connection conn = getConnection();
         if (conn == null) return;
@@ -272,6 +326,10 @@ public class EventoDAOJdbc implements EventoDAO{
         }
     }
 
+    /**
+     * Devuelve todos los eventos con JOIN a la tabla lugar para obtener nombre, dirección y ciudad.
+     * Para cada evento carga también los datos de su subtipo.
+     */
     @Override
     public List<Evento> listarTodos() {;
         List<Evento> eventos = new ArrayList<>();
@@ -301,6 +359,10 @@ public class EventoDAOJdbc implements EventoDAO{
         return eventos;
     }
 
+    /**
+     * Mapea una fila del ResultSet a un objeto Evento concreto (Concierto, Teatro o Museo)
+     * según el campo tipo_evento. Rellena los atributos comunes heredados de Evento.
+     */
     private Evento mapearEvento(ResultSet rs) throws SQLException {
         int id = rs.getInt("id");
         String nombre = rs.getString("nombre");

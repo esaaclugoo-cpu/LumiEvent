@@ -13,14 +13,25 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Implementación JDBC del repositorio de tickets.
+ * Accede directamente a la tabla ticket de MySQL usando la conexión Singleton de Conexion.
+ * Incluye consultas agregadas para calcular tickets vendidos por evento y tipo.
+ */
 @Repository
 @Qualifier("ticketDAOJdbc")
 public class TicketDAOJdbc implements TicketDAO {
 
+    /** Obtiene la conexión activa desde el Singleton Conexion. */
     private Connection getConnection() {
         return Conexion.getInstancia().getConnection();
     }
 
+    /**
+     * Inserta un nuevo ticket en la base de datos y actualiza el id generado en el objeto.
+     * Si id_asiento es null o 0 inserta NULL en la columna (campo opcional).
+     * Si id_compra es 0 también inserta NULL (aunque la tabla lo exige NOT NULL en producción).
+     */
     @Override
     public void guardar(Ticket ticket) {
         Connection conn = getConnection();
@@ -58,6 +69,10 @@ public class TicketDAOJdbc implements TicketDAO {
         }
     }
 
+    /**
+     * Actualiza todos los campos de un ticket existente identificado por su id.
+     * Maneja id_asiento e id_compra como nullable igual que en guardar.
+     */
     @Override
     public void actualizar(Ticket ticket) {
         Connection conn = getConnection();
@@ -88,11 +103,14 @@ public class TicketDAOJdbc implements TicketDAO {
         }
     }
 
+    /**
+     * Elimina el ticket con el id indicado de la base de datos.
+     */
     @Override
     public void eliminar(int id) {
         Connection conn = getConnection();
         if (conn == null) {
-            return;
+            throw new RuntimeException("No hay conexión disponible para eliminar ticket.");
         }
 
         String sql = "DELETE FROM ticket WHERE id = ?";
@@ -100,10 +118,13 @@ public class TicketDAOJdbc implements TicketDAO {
             pstmt.setInt(1, id);
             pstmt.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("No se pudo eliminar el ticket con id " + id, e);
         }
     }
 
+    /**
+     * Obtiene un ticket por su id. Devuelve null si no existe o hay error de conexión.
+     */
     @Override
     public Ticket obtenerPorId(int id) {
         Connection conn = getConnection();
@@ -125,6 +146,9 @@ public class TicketDAOJdbc implements TicketDAO {
         return null;
     }
 
+    /**
+     * Devuelve la lista completa de tickets ordenada por id descendente.
+     */
     @Override
     public List<Ticket> listarTodos() {
         Connection conn = getConnection();
@@ -146,6 +170,10 @@ public class TicketDAOJdbc implements TicketDAO {
         return tickets;
     }
 
+    /**
+     * Suma la cantidad total de tickets vendidos para un evento.
+     * Solo cuenta tickets cuya compra tenga total > 0 (excluye compras borrador).
+     */
     @Override
     public int sumarCantidadPorEvento(int idEvento) {
         Connection conn = getConnection();
@@ -171,6 +199,10 @@ public class TicketDAOJdbc implements TicketDAO {
         return 0;
     }
 
+    /**
+     * Suma la cantidad de tickets vendidos para un evento y un tipo concreto (General, VIP, Premium).
+     * Compara el tipo ignorando mayúsculas y espacios. Solo cuenta compras reales (total > 0).
+     */
     @Override
     public int sumarCantidadPorEventoYTipo(int idEvento, String tipo) {
         Connection conn = getConnection();
@@ -197,6 +229,10 @@ public class TicketDAOJdbc implements TicketDAO {
         return 0;
     }
 
+    /**
+     * Mapea una fila del ResultSet al objeto Ticket correspondiente.
+     * Lee id_asiento con getObject para manejar correctamente el valor NULL de la BD.
+     */
     private Ticket mapearTicket(ResultSet rs) throws SQLException {
         Ticket ticket = new Ticket();
         ticket.setId(rs.getInt("id"));

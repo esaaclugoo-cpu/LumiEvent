@@ -1,3 +1,42 @@
+<!--
+  Formulario de Asiento - formAsiento.html
+  Propósito: Crear individual o masivamente asientos, o editar existentes.
+  Flujo diferenciado según edición o creación:
+
+  CREACIÓN (asiento.id == 0):
+    1. Selector de lugar (obligatorio)
+    2. Campo fila: una letra para agrupar asientos (ej: A)
+    3. Bloque masivo: 3 inputs para cantidad (general, vip, premium)
+    4. Sistema: crea secuencialmente asientos 1, 2, 3... numerados para esa fila y zona
+
+  EDICIÓN (asiento.id > 0):
+    1. Selector de lugar (obligatorio) - puede cambiar lugar
+    2. Campo fila (obligatorio) - puede cambiar fila
+    3. Número asiento: field number individual
+    4. Zona: selector (general/vip/premium)
+
+  Atributos Thymeleaf principales:
+    - th:object="${asiento}": vincula objeto asiento
+    - th:field: vincula atributos a inputs
+    - th:if, th:unless: muestra bloques diferentes según creación o edición
+    - th:each: lugar : ${lugares} - itera lugares
+
+  Modelos pasados:
+    - asiento: Asiento - objeto con id, id_lugar, fila, numero_asiento, zona
+    - asiento.id: 0 si es nuevo, > 0 si es edición
+    - lugares: Map<Integer, String> - mapeo id -> nombre lugar
+
+  Procesamiento:
+    - POST a /asientos/guardar (para ambas operaciones)
+    - En creación: cantidadGeneral, cantidadVip, cantidadPremium son campos name adicionales
+    - En edición: solo numero_asiento y zona se editan
+
+  Validación en backend:
+    - id_lugar obligatorio y válido
+    - fila obligatoria para creación masiva
+    - En edición: número y zona requeridos
+    - Cantidades masivas no pueden ser negativas
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>

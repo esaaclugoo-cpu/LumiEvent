@@ -1,6 +1,7 @@
 (function () {
     'use strict';
 
+    // Normaliza texto para búsquedas (minúsculas, sin acentos y sin espacios sobrantes).
     function normalizar(texto) {
         return (texto || '')
             .toString()
@@ -10,6 +11,7 @@
             .trim();
     }
 
+    // Convierte valores de dataset o inputs a número decimal seguro con fallback.
     function parseNumber(value, fallback) {
         if (value === null || value === undefined || value === '') {
             return fallback;
@@ -18,16 +20,19 @@
         return Number.isFinite(parsed) ? parsed : fallback;
     }
 
+    // Inicializa filtros y buscador de la pantalla home cuando existe el grid de eventos.
     function initHome() {
         var grid = document.getElementById('eventos-grid');
         if (!grid) {
             return;
         }
 
+        // Estado local de filtros para combinar tipo, disponibilidad y búsqueda de texto.
         var filtroTipo = 'all';
         var filtroDisp = 'all';
         var textoBusqueda = '';
 
+        // Construye el texto indexable de una card a partir de título, ubicación y categoría.
         function textoCard(col) {
             var titulo = col.querySelector('.evento-card-title');
             var ubicacion = col.querySelector('.evento-location');
@@ -39,6 +44,7 @@
             );
         }
 
+        // Aplica todos los filtros activos sobre el grid y gestiona el mensaje "sin resultados".
         function aplicarFiltros() {
             var cards = document.querySelectorAll('#eventos-grid > div[data-tipo]');
             var visibles = 0;
@@ -63,6 +69,7 @@
             }
         }
 
+        // Escucha cambios del filtro por tipo de evento.
         document.querySelectorAll('input[name="filtro-tipo"]').forEach(function (r) {
             r.addEventListener('change', function () {
                 filtroTipo = this.value;
@@ -70,6 +77,7 @@
             });
         });
 
+        // Escucha cambios del filtro por disponibilidad.
         document.querySelectorAll('input[name="filtro-disp"]').forEach(function (r) {
             r.addEventListener('change', function () {
                 filtroDisp = this.value;
@@ -77,6 +85,7 @@
             });
         });
 
+        // Conecta el buscador del header para filtrar resultados en tiempo real.
         var inputBusqueda = document.getElementById('busqueda-eventos');
         if (inputBusqueda) {
             inputBusqueda.addEventListener('input', function () {
@@ -85,6 +94,7 @@
             });
         }
 
+        // Sincroniza la flecha visual de cada bloque colapsable de filtros.
         document.querySelectorAll('.filter-toggle-btn').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 this.classList.toggle('collapsed');
@@ -92,6 +102,7 @@
         });
     }
 
+    // Inicializa cálculo de total y disponibilidad dinámica en la ficha de un evento.
     function initHomeEvento() {
         var tipo = document.getElementById('tipo');
         var cantidad = document.getElementById('cantidad');
@@ -105,23 +116,27 @@
             return;
         }
 
+        // Lee stock disponible por tipo desde atributos data-* del formulario.
         var disponiblesPorTipo = {
             general: parseInt(form.dataset.dispGeneral || '0', 10) || 0,
             vip: parseInt(form.dataset.dispVip || '0', 10) || 0,
             premium: parseInt(form.dataset.dispPremium || '0', 10) || 0
         };
 
+        // Lee precios por tipo desde atributos data-* y los normaliza a número.
         var precios = {
             general: parseNumber(form.dataset.precioGeneral, 0),
             vip: parseNumber(form.dataset.precioVip, 0),
             premium: parseNumber(form.dataset.precioPremium, 0)
         };
 
+        // Devuelve el stock disponible para el tipo actualmente seleccionado.
         function obtenerDisponiblesTipo() {
             var clave = (tipo.value || '').toLowerCase();
             return parseInt(disponiblesPorTipo[clave] || 0, 10) || 0;
         }
 
+        // Ajusta máximo de cantidad, estado del botón y mensaje de falta de stock.
         function actualizarDisponibilidad() {
             var disponibles = obtenerDisponiblesTipo();
             maximoTipo.textContent = String(disponibles);
@@ -139,6 +154,7 @@
             }
         }
 
+        // Recalcula el total estimado (precio x cantidad) mostrado al usuario.
         function calcular() {
             var clave = (tipo.value || '').toLowerCase();
             var precio = precios[clave] || 0;
@@ -146,22 +162,28 @@
             total.textContent = (precio * Math.max(cant, 0)).toFixed(2);
         }
 
+        // Reacciona a cambios de tipo para actualizar stock y total estimado.
         tipo.addEventListener('change', function () {
             actualizarDisponibilidad();
             calcular();
         });
+
+        // Recalcula total cuando cambia la cantidad.
         cantidad.addEventListener('input', calcular);
 
+        // Carga estado inicial al abrir la página.
         actualizarDisponibilidad();
         calcular();
     }
 
+    // Muestra/oculta campos específicos del formulario de evento según su tipo.
     function initFormEvento() {
         var select = document.getElementById('tipoEvento');
         if (!select) {
             return;
         }
 
+        // Controla la visibilidad de bloques .tipo-specific por tipo seleccionado.
         function actualizarCamposPorTipo(tipo) {
             document.querySelectorAll('.tipo-specific').forEach(function (div) {
                 div.style.display = 'none';
@@ -178,12 +200,14 @@
             }
         }
 
+        // Ejecuta una primera vez y deja suscrito el cambio del select.
         actualizarCamposPorTipo(select.value);
         select.addEventListener('change', function () {
             actualizarCamposPorTipo(this.value);
         });
     }
 
+    // Activa el botón de mostrar/ocultar contraseña en la pantalla de login.
     function initLoginPasswordToggle() {
         var inputPassword = document.getElementById('password');
         var togglePassword = document.getElementById('togglePassword');
@@ -200,6 +224,7 @@
             togglePassword.appendChild(toggleIcon);
         }
 
+        // Alterna tipo de input y actualiza icono y etiqueta accesible del botón.
         togglePassword.addEventListener('click', function () {
             var esPassword = inputPassword.type === 'password';
             inputPassword.type = esPassword ? 'text' : 'password';
@@ -209,6 +234,7 @@
         });
     }
 
+    // Punto de entrada: inicializa solo los módulos cuya vista está presente en el DOM.
     document.addEventListener('DOMContentLoaded', function () {
         initHome();
         initHomeEvento();

@@ -1,3 +1,44 @@
+<!--
+  Formulario de Evento - formEvento.html
+  Propósito: Crear o editar evento con campos comunes y específicos por tipo.
+  Contenido del formulario:
+    1. Campos comunes (todos los eventos):
+       - Nombre, Descripción, Fecha (con validación de fecha mínima)
+       - Aforo máximo, Tipo evento (selector concierto/teatro/museo)
+       - Lugar (selector de lugares registrados)
+       - Imagen (file input, acepta image/*)
+
+    2. Campos específicos (ocultos por defecto, mostrados según tipo_evento):
+       - CONCIERTO: Artista Principal, Género Musical, Duración (minutos)
+       - TEATRO: Obra, Director
+       - MUSEO: Nombre Exposición, Tipo Exposición, Fecha Fin
+
+  Atributos Thymeleaf principales:
+    - th:object="${evento}": vincula objeto evento del modelo
+    - th:field: vincula atributos del objeto a inputs (genera nombres automáticamente)
+    - th:if, th:unless: muestra campos fecha con/sin validación según edición
+    - th:attr: establece atributo min con fecha actual (solo en creación)
+    - th:each: lugar : ${lugares} - itera para llenar selector
+    - th:text: muestra opción del selector con nombre + ciudad del lugar
+    - th:src: muestra imagen actual (si existe) en sección previa
+
+  Modelos pasados:
+    - evento: Evento - objeto con id, nombre, descripción, fecha, etc.
+    - evento.id: 0 si es nuevo, > 0 si es edición
+    - evento.tipo_evento: enum actual (usado para mostrar valores guardados)
+    - evento.ruta_imagen: ruta de imagen actual (puede ser null)
+    - lugares: List<Lugar> - para llenar selector
+
+  Procesamiento:
+    - POST a /eventos/guardar (si evento.id == 0)
+    - POST a /eventos/actualizar (si evento.id > 0)
+    - enctype="multipart/form-data" para subida de imagen
+    - Imagen antigua se elimina al subir nueva (backend)
+
+  JavaScript en app.js:
+    - Show/hide campos específicos según selector tipo_evento
+    - Inicializa campos visibles según valor guardado (en edición)
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>

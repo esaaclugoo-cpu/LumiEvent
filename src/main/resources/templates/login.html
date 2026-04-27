@@ -1,3 +1,13 @@
+<!--
+  Página de Inicio de Sesión - login.html
+  Propósito: Autenticar usuarios existentes en la plataforma NovaTicket.
+  Flujo: Recibe email y contraseña, valida credenciales en AuthController y crea sesión HTTP.
+  Atributos Thymeleaf usados:
+    - th:href: rutas dinámicas hacia home, registro y panel admin
+    - th:if: mostrar mensajes de error o éxito según variables del modelo
+    - th:text: mostrar contenido dinámico en etiquetas
+  Forma de procesamiento: POST a /login con email y password
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>

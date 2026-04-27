@@ -1,3 +1,33 @@
+<!--
+  Página de Carrito de Compra - carrito.html
+  Propósito: Mostrar items añadidos al carrito, permitir eliminar items y procesar pago.
+  Contenido:
+    1. Tabla de items: evento, tipo de ticket, cantidad, precio unitario, subtotal, acción eliminar
+    2. Total: suma de subtotales de todos los items
+    3. Botón Pagar: envía POST a /cliente/carrito/pagar (deshabilitado si carrito vacío)
+    4. Mensaje si carrito vacío: "No tienes items en el carrito"
+
+  Atributos Thymeleaf principales:
+    - th:each, iter: itera sobre lista carrito con índice para capturar posición
+    - th:if: mostrar fila vacía si no hay items
+    - th:text: muestra valores de item (nombreEvento, tipo, cantidad, precios)
+    - #numbers.formatDecimal: formatea precios a 2 decimales (ej: 25.00 EUR)
+    - th:value, th:disabled: el input hidden pasa índice para identificar item a eliminar
+
+  Modelos pasados:
+    - carrito: List<ItemCarrito> - items con nombreEvento, tipo, cantidad, precioUnitario, subtotal
+    - total: Double - suma total de subtotales
+    - usuarioSesion: Usuario o null - usuario autenticado
+    - esAdmin: boolean - acceso a panel admin
+    - okMensaje, errorMensaje: mensajes de feedback
+
+  Flujo:
+    1. Usuario compra tickets en homeEvento.html (POST a /cliente/evento/{id}/agregar-carrito)
+    2. Items se almacenan en sesión HTTP bajo clave "carrito"
+    3. Usuario ve resumen en carrito.html
+    4. Puede eliminar items (POST a /cliente/carrito/eliminar con índice)
+    5. Paga carrito (POST a /cliente/carrito/pagar) que crea compra y tickets
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>

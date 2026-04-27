@@ -1,3 +1,14 @@
+<!--
+  Página de Registro de Usuarios - registro.html
+  Propósito: Permitir crear nuevas cuentas de usuario (tipo CLIENTE).
+  Flujo: Recibe nombre, email y contraseña, registra usuario en AuthController.
+  Atributos Thymeleaf usados:
+    - th:href: rutas dinámicas hacia login y home
+    - th:if: mostrar mensaje de error si hay
+    - th:action: envía form POST a /registro
+  Forma de procesamiento: POST a /registro con nombre, email y password
+  Notas: Nuevos usuarios se crean siempre como CLIENTE, no admin.
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>

@@ -1,3 +1,32 @@
+<!--
+  Listado de Usuarios - crudUsuario.html
+  Propósito: Mostrar tabla CRUD de todos los usuarios registrados (clientes y admins).
+  Contenido: Tabla con columnas:
+    1. Nombre: nombre del usuario
+    2. Email: email de contacto
+    3. Password: mostrado como viñetas (••••••) por seguridad
+    4. Tipo: badge con tipo_usuario (CLIENTE=azul, ADMIN=rojo)
+    5. Acciones: botones Editar y Eliminar
+
+  Atributos Thymeleaf principales:
+    - th:each: usuario : ${usuarios} - itera sobre lista de usuarios
+    - th:text: muestra valores de usuario
+    - th:classappend: aplica clase badge bg-danger si es admin, bg-primary si es cliente
+    - th:href: rutas dinámicas a editar (/usuarios/editar/{id}) y eliminar
+
+  Modelos pasados:
+    - usuarios: List<Usuario> - todos los usuarios
+    - usuario.tipo_usuario: enum UsuarioEnum (admin/cliente)
+
+  Acciones:
+    - Nuevo usuario: botón verde que lleva a /usuarios/nuevo
+    - Editar: GET a /usuarios/editar/{id} carga formulario con datos
+    - Eliminar: GET a /usuarios/eliminar/{id} elimina usuario y redirecciona
+
+  Seguridad: Las contraseñas jamás se muestran en texto plano (solo viñetas).
+
+  Relaciones: Usuario -> tiene muchas compras -> tiene muchos tickets
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>
@@ -29,6 +58,9 @@
             <a th:href="@{/usuarios/nuevo}" class="btn btn-success">Nuevo Usuario</a>
         </div>
     </div>
+
+    <div th:if="${okMensaje}" class="alert alert-success" th:text="${okMensaje}"></div>
+    <div th:if="${errorMensaje}" class="alert alert-danger" th:text="${errorMensaje}"></div>
 
     <div class="table-responsive">
     <table class="table table-bordered table-striped table-hover align-middle">

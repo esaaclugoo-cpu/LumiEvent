@@ -1,3 +1,36 @@
+<!--
+  Listado de Eventos - crudEvento.html
+  Propósito: Mostrar tabla CRUD de todos los eventos registrados en el sistema.
+  Contenido: Tabla con columnas:
+    1. Imagen: miniatura del evento (max 70px)
+    2. Tipo: badge con tipo_evento (concierto/teatro/museo)
+    3. Nombre, Descripción, Lugar, Aforo Máximo, Fecha
+    4. Detalles específicos: varían según tipo de evento
+       - Concierto: artista, género, duración
+       - Teatro: obra, director
+       - Museo: exposición, tipo_exposición, fecha_fin
+    5. Acciones: botones Editar y Eliminar
+
+  Atributos Thymeleaf principales:
+    - th:each: evento : ${eventos} - itera sobre lista de eventos
+    - th:if: muestra detalles específicos según evento.tipo_evento.name()
+    - th:src: carga imagen desde ruta /uploads/{filename}
+    - th:unless: muestra "Sin imagen" si no hay ruta_imagen
+    - th:classappend: aplica clase CSS según tipo
+    - th:href: rutas dinámicas a editar (/eventos/editar/{id}) y eliminar
+
+  Modelos pasados:
+    - eventos: List<Evento> - todos los eventos con sus atributos
+    - evento.tipo_evento: enum con name() = concierto/teatro/museo
+    - evento.ruta_imagen: ruta del archivo subido (puede ser null)
+
+  Acciones:
+    - Nuevo evento: botón verde que lleva a /eventos/nuevo
+    - Editar: GET a /eventos/editar/{id} carga formulario con datos
+    - Eliminar: GET a /eventos/eliminar/{id} elimina evento y redirecciona a listado
+
+  Estilos: Tabla Bootstrap con clases table-bordered, table-striped, table-hover, align-middle.
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>
@@ -29,6 +62,8 @@
             <a th:href="@{/eventos/nuevo}" class="btn btn-success">Nuevo Evento</a>
         </div>
     </div>
+    <div th:if="${okMensaje}" class="alert alert-success" th:text="${okMensaje}"></div>
+    <div th:if="${errorMensaje}" class="alert alert-danger" th:text="${errorMensaje}"></div>
     <div class="table-responsive">
     <table class="table table-bordered table-striped table-hover align-middle">
         <thead class="table-dark">

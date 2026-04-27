@@ -1,3 +1,38 @@
+<!--
+  Formulario de Usuario - formUsuario.html
+  Propósito: Crear o editar usuario (cliente o administrador).
+  Contenido del formulario:
+    1. Nombre: nombre del usuario
+    2. Email: email único (validación en backend)
+    3. Password: contraseña en texto plano (se almacena sin encriptar en BD - mejora: usar BCrypt)
+    4. Tipo Usuario: selector para elegir CLIENTE o ADMIN
+
+  Atributos Thymeleaf principales:
+    - th:object="${usuario}": vincula objeto usuario del modelo
+    - th:field: vincula atributos del objeto a inputs
+    - th:each: tipo : ${tiposUsuario} - itera sobre enumerados de tipo
+    - th:text: muestra encabezado dinámico (Agregar vs Editar)
+
+  Modelos pasados:
+    - usuario: Usuario - objeto con id, nombre, email, password, tipo_usuario
+    - usuario.id: 0 si es nuevo, > 0 si es edición
+    - tiposUsuario: List<UsuarioEnum> o List<String> - valores de tipos disponibles
+
+  Procesamiento:
+    - POST a /usuarios/guardar (para ambas operaciones)
+
+  Validación en backend:
+    - Email debe ser único
+    - Nombre y password obligatorios
+    - Tipo usuario debe ser válido (admin o cliente)
+
+  Flujo:
+    1. Crear: GET /usuarios/nuevo muestra formulario vacío
+    2. Editar: GET /usuarios/editar/{id} carga usuario en formulario
+    3. Guardar: POST /usuarios/guardar procesa ambos casos
+
+  Notas de seguridad: Las contraseñas deben encriptarse (mejora futura: implementar BCrypt).
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>

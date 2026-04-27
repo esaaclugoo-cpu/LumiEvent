@@ -1,3 +1,32 @@
+<!--
+  Formulario de Lugar - formLugar.html
+  Propósito: Crear o editar un lugar (venue para eventos).
+  Contenido del formulario:
+    1. Nombre: nombre del lugar (ej: "Auditorio Nacional", "Teatro Real")
+    2. Dirección: dirección física completa
+    3. Ciudad: ciudad donde se ubica
+
+  Atributos Thymeleaf principales:
+    - th:object="${lugar}": vincula objeto lugar del modelo
+    - th:field: vincula atributos del objeto a inputs
+    - th:text: muestra encabezado dinámico (Agregar vs Editar)
+
+  Modelos pasados:
+    - lugar: Lugar - objeto con id, nombre, dirección, ciudad
+    - lugar.id: 0 si es nuevo, > 0 si es edición
+
+  Procesamiento:
+    - POST a /lugares/guardar (para ambas operaciones)
+
+  Validación en backend:
+    - Nombre, dirección y ciudad obligatorios
+    - Sin validación de duplicados (permite múltiples lugares con mismo nombre en ciudades diferentes)
+
+  Flujo:
+    1. Crear: GET /lugares/nuevo muestra formulario vacío
+    2. Editar: GET /lugares/editar/{id} carga lugar en formulario
+    3. Guardar: POST /lugares/guardar procesa ambos casos
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>

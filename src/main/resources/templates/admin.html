@@ -1,3 +1,26 @@
+<!--
+  Panel de Administración Principal - admin.html
+  Propósito: Dashboard de administrador con acceso a todos los módulos CRUD.
+  Contenido: 6 tarjetas Bootstrap con enlaces a:
+    1. Lugares: gestión de lugares para eventos
+    2. Asientos: creación individual y masiva de asientos
+    3. Eventos: CRUD de eventos (conciertos, teatros, museos)
+    4. Tickets: creación masiva de tickets vinculados a eventos
+    5. Usuarios: gestión de usuarios (clientes y admins)
+    6. Compras: visualización de todas las compras del sistema
+
+  Atributos Thymeleaf principales:
+    - th:href: rutas dinámicas a cada módulo CRUD
+    - th:text: muestra hora actual del sistema
+    - th:src: imagen del logo cargada desde @{/img/logo.png}
+
+  Modelos pasados:
+    - #dates.createNow(): hora actual del servidor
+
+  Seguridad: Solo accesible para usuarios con rol ADMIN mediante AuthInterceptor.
+  Layout: Sin navbar tradicional, solo logo y botón volver a home.
+  Estilos: Clase admin-panel en body para estilos específicos del panel.
+-->
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>

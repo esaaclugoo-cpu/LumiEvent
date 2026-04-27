@@ -1,3 +1,36 @@
+<!--
+  Listado de Tickets - crudTicket.html
+  Propósito: Mostrar tabla CRUD de todos los tickets registrados en el sistema.
+  Contenido: Tabla con columnas:
+    1. Evento: nombre del evento (traducción desde ID)
+    2. Asiento: identificación del asiento asociado (traducción desde ID, puede ser null)
+    3. Tipo: tipo de ticket (general/vip/premium)
+    4. Compra: referencia a la compra (traducción desde ID_compra)
+    5. Cantidad: cantidad de entradas de este tipo en este ticket
+    6. Precio Unitario: precio por entrada
+    7. Acciones: botones Editar y Eliminar
+
+  Atributos Thymeleaf principales:
+    - th:each: ticket : ${tickets} - itera sobre lista de tickets
+    - th:text: muestra valores de ticket
+    - eventosMap[ticket.id_evento]: Map que traduce ID_evento a nombre
+    - asientosMap[ticket.id_asiento]: Map que traduce ID_asiento a descripción
+    - comprasMap[ticket.id_compra]: Map que traduce ID_compra a referencia
+    - th:href: rutas dinámicas a editar (/tickets/editar/{id}) y eliminar
+
+  Modelos pasados:
+    - tickets: List<Ticket> - todos los tickets
+    - eventosMap: Map<Integer, String> - mapeo id_evento -> nombre evento
+    - asientosMap: Map<Integer, String> - mapeo id_asiento -> descripción
+    - comprasMap: Map<Integer, String> - mapeo id_compra -> referencia
+
+  Acciones:
+    - Nuevo ticket: botón verde que lleva a /tickets/nuevo
+    - Editar: GET a /tickets/editar/{id} carga formulario
+    - Eliminar: GET a /tickets/eliminar/{id} elimina ticket y redirecciona
+
+  Relaciones: Ticket <- pertenece a compra, evento y asiento (opcional)
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>
@@ -29,6 +62,9 @@
             <a th:href="@{/tickets/nuevo}" class="btn btn-success">Nuevo Ticket</a>
         </div>
     </div>
+
+    <div th:if="${okMensaje}" class="alert alert-success" th:text="${okMensaje}"></div>
+    <div th:if="${errorMensaje}" class="alert alert-danger" th:text="${errorMensaje}"></div>
 
     <div class="table-responsive">
     <table class="table table-bordered table-striped table-hover align-middle">

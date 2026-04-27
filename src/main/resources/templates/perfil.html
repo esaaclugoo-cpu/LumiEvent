@@ -1,3 +1,29 @@
+<!--
+  Página de Perfil de Usuario - perfil.html
+  Propósito: Gestionar información personal del usuario autenticado (nombre, email, contraseña).
+  Contenido:
+    1. Card principal: formulario de edición de perfil
+    2. Campos: nombre, email, nueva contraseña (opcional)
+    3. Validación: email requerido en formato válido, nombre obligatorio
+    4. Contraseña: campo opcional para cambiar la actual (dejar vacío para mantener)
+    5. Card secundaria: acceso rápido al historial de compras completo
+
+  Atributos Thymeleaf principales:
+    - th:value: rellena campos con datos del objeto usuario del modelo
+    - th:href: rutas dinámicas a home y historial de compras
+    - th:if: mostrar alertas de éxito/error pasadas como parámetros de query
+    - th:action: envía form POST a /cliente/perfil/actualizar
+
+  Modelos pasados:
+    - usuario: Usuario - usuario autenticado con nombre, email (contraseña no se muestra)
+    - param.ok: mensaje de éxito (ej: "Perfil actualizado correctamente")
+    - param.error: mensaje de error (ej: "Email ya está registrado")
+
+  JavaScript inline:
+    - togglePasswordVisibility(): muestra/oculta contraseña con iconos de ojo de Bootstrap Icons
+
+  Flujo: Usuario autenticado accede a /cliente/perfil, modifica datos y envía POST a /cliente/perfil/actualizar
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>
